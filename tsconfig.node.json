@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
+    "exactOptionalPropertyTypes": true,
+    "target": "ES2022",
+    "outDir": "out",
+    "rootDir": "electron",
+    "skipLibCheck": true,
+    "esModuleInterop": true
+  },
+  "include": ["electron"]
+}

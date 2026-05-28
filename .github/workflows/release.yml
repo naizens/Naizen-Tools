@@ -1,0 +1,31 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Dependencies installieren
+        run: npm ci
+
+      - name: App bauen
+        run: npm run build
+        env:
+          ELECTRON_RUN_AS_NODE: ''
+
+      - name: Installer bauen und GitHub Release erstellen
+        run: npx electron-builder --win
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          ELECTRON_RUN_AS_NODE: ''

@@ -1,0 +1,38 @@
+appId: com.naizen.tools
+productName: Naizen-Tools
+directories:
+  buildResources: assets
+  output: dist
+
+files:
+  - out/**
+  - "!**/*.map"
+  - "!**/test/**"
+  - "!**/*.md"
+  - "!**/node_modules/*/{README,CHANGELOG,LICENSE}*"
+
+asar: true
+asarUnpack:
+  - "**/@nut-tree-fork/**"
+  - "**/uiohook-napi/**"
+  - "**/node-window-manager/**"
+  - "**/extract-file-icon/**"
+
+win:
+  target: nsis
+  icon: assets/icon.ico
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+
+extraResources:
+  - from: resources/anti_pause.dll
+    to: anti_pause.dll
+
+publish:
+  provider: github
+
+compression: maximum
