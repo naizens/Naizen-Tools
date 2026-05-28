@@ -34,5 +34,7 @@ extraResources:
 
 publish:
   provider: github
+  draft: false
+  prerelease: false
 
 compression: maximum
