@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.1](https://github.com/naizens/Naizen-Tools/compare/v0.2.0...v0.2.1) (2026-05-28)
+
+### Bug Fixes
+
+* **assets:** Icon auf 256x256 hochskalieren für electron-builder ([fdb13dc](https://github.com/naizens/Naizen-Tools/commit/fdb13dc506127c37c5571af39e9bc874151f3a90))
+
 ## 0.2.0 (2026-05-28)
 
 ## [0.1.0] - 2026-05-28
