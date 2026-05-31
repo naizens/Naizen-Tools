@@ -27,10 +27,7 @@ contextBridge.exposeInMainWorld('api', {
   onHotkeyTrigger: (cb: (data: { tool: string }) => void) => {
     ipcRenderer.on('hotkey:trigger', (_, data) => cb(data as { tool: string }))
   },
-  onUpdateAvailable: (cb: () => void) => {
-    ipcRenderer.on('update:available', cb)
-  },
-  onUpdateReady: (cb: () => void) => {
-    ipcRenderer.on('update:ready', cb)
-  },
+  onUpdateAvailable:    (cb: () => void) => { ipcRenderer.on('update:available',   cb) },
+  onUpdateDownloading:  (cb: () => void) => { ipcRenderer.on('update:downloading', cb) },
+  onUpdateReady:        (cb: () => void) => { ipcRenderer.on('update:ready',        cb) },
 })

@@ -43,9 +43,8 @@ export default function App() {
       setAfkTick(remaining, presses)
     })
     window.api.onUpdateAvailable(() => setUpdateAvailable())
+    window.api.onUpdateDownloading(() => setUpdateDownloading())
     window.api.onUpdateReady(() => setUpdateReady())
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window.api as any).onUpdateDownloading?.(() => setUpdateDownloading())
 
     // Re-register persisted hotkeys after app start
     const { config } = useToolStore.getState()

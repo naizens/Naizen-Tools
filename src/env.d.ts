@@ -24,7 +24,8 @@ interface Window {
     onCaptureResult: (cb: (data: { label: string; value: string }) => void) => void
     onAfkTick: (cb: (data: { remaining: number; presses: number }) => void) => void
     onHotkeyTrigger: (cb: (data: { tool: string }) => void) => void
-    onUpdateAvailable: (cb: () => void) => void
-    onUpdateReady: (cb: () => void) => void
+    onUpdateAvailable:   (cb: () => void) => void
+    onUpdateDownloading: (cb: () => void) => void
+    onUpdateReady:       (cb: () => void) => void
   }
 }
