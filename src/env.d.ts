@@ -1,3 +1,5 @@
+declare const __APP_VERSION__: string
+
 interface WindowInfo {
   title: string
   handle: number

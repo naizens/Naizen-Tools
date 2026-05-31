@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 interface ToolConfig {
-  afk: { sHold: number; intervalMs: number; windowTitle: string; hotkey: string | null }
+  afk: { sHold: number; intervalMs: number; windowTitle: string; hotkey: string | null; enterEnabled: boolean; enterIntervalMs: number }
   whold: Record<string, never>
   clicker: { button: 'left' | 'right' | 'middle'; intervalMs: number; hotkey: string | null }
   autokey: { key: string | null; keyLabel: string; downMs: number; upMs: number; hotkey: string | null }
@@ -39,7 +39,7 @@ export const useToolStore = create<ToolState>()(
         game: false,
       },
       config: {
-        afk:     { sHold: 200, intervalMs: 400000, windowTitle: '', hotkey: null },
+        afk:     { sHold: 200, intervalMs: 400000, windowTitle: '', hotkey: null, enterEnabled: false, enterIntervalMs: 60000 },
         whold:   {},
         clicker: { button: 'left', intervalMs: 100, hotkey: null },
         autokey: { key: null, keyLabel: '—', downMs: 50, upMs: 50, hotkey: null },
@@ -96,7 +96,7 @@ export const useToolStore = create<ToolState>()(
         return {
           theme: s.theme ?? 'dark',
           config: {
-            afk:     { sHold: 200, intervalMs: 400000, windowTitle: '', hotkey: null, ...(s.config?.afk     ?? {}) },
+            afk:     { sHold: 200, intervalMs: 400000, windowTitle: '', hotkey: null, enterEnabled: false, enterIntervalMs: 60000, ...(s.config?.afk ?? {}) },
             whold:   {},
             clicker: { button: 'left', intervalMs: 100,                hotkey: null, ...(s.config?.clicker  ?? {}) },
             autokey: { key: null, keyLabel: '—', downMs: 50, upMs: 50, hotkey: null, ...(s.config?.autokey  ?? {}) },

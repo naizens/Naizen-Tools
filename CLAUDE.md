@@ -48,7 +48,7 @@ Typen: feat, fix, chore, style, refactor, perf, docs
 Sprache: Deutsch, Imperativ, max. 72 Zeichen
 
 ## Branches
-- `main` — nur getaggte Releases (via `/release`)
-- `dev` — aktiver Entwicklungs-Branch
-- `feat/<name>`, `fix/<name>`, `style/<name>`, `chore/<name>` → von `dev`, nach `dev`
-- `hotfix/<name>` → von `main`, nach `main` + `dev`
+- `main` — nur getaggte Releases; direkte Commits verboten
+- `dev` — aktiver Entwicklungs-Branch; Basis für alle Feature- und Bug-Zweige
+- `feat/<name>` → von `dev`, Merge nach `dev`
+- `bug-fix/<name>` → von `dev`, Merge nach `dev` **und** `main`

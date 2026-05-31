@@ -12,6 +12,32 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   {
+    version: '0.2.1',
+    date: '28. Mai 2026',
+    sections: [
+      {
+        label: 'Bugfix',
+        color: 'text-warning',
+        items: [
+          'App-Icon — wird jetzt korrekt in 256×256 angezeigt (kein verpixeltes Icon mehr im Installer)',
+        ],
+      },
+    ],
+  },
+  {
+    version: '0.2.0',
+    date: '28. Mai 2026',
+    sections: [
+      {
+        label: 'Intern',
+        color: 'text-muted',
+        items: [
+          'Release-Pipeline — automatische GitHub Releases und Updates über Actions eingerichtet',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.1.0',
     date: '28. Mai 2026',
     sections: [
@@ -19,14 +45,14 @@ const ENTRIES: Entry[] = [
         label: 'Neu',
         color: 'text-success',
         items: [
-          'Anti-AFK — D/A Tasten automatisch drücken',
-          'W-Hold — W-Taste dauerhaft gedrückt halten',
-          'Auto-Klicker — Maustaste automatisch klicken',
-          'Auto-Taste — Beliebige Taste automatisch drücken',
-          'Dark / Light Mode',
-          'Navbar mit Tab-Wechsel',
-          'System Tray',
-          'Auto-Updater via GitHub Releases',
+          'Anti-AFK — verhindert automatisch, dass du wegen Inaktivität aus dem Spiel geworfen wirst',
+          'W-Hold — hält W dauerhaft gedrückt, damit du dich ohne Tastendruck vorwärtsbewegst',
+          'Auto-Klicker — klickt automatisch für dich, so oft und so schnell du willst',
+          'Auto-Taste — drückt eine beliebige Taste automatisch im eingestellten Takt',
+          'Design — wähle zwischen hellem und dunklem Aussehen',
+          'Navigation — wechsle mit einem Klick zwischen den Tools',
+          'System Tray — die App läuft im Hintergrund weiter, auch wenn du sie minimierst',
+          'Automatische Updates — die App hält sich selbst auf dem neuesten Stand',
         ],
       },
     ],
