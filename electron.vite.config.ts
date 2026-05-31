@@ -23,6 +23,9 @@ export default defineConfig({
   },
   renderer: {
     root: '.',
+    define: {
+      __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+    },
     build: {
       sourcemap: false,
       rollupOptions: {

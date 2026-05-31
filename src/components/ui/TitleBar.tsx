@@ -10,9 +10,12 @@ export default function TitleBar({ onPatchNotes }: Props) {
 
   return (
     <div className="drag flex items-center justify-between h-10 px-4 shrink-0 border-b border-surface/10">
-      <span className="no-drag text-xs font-mono font-semibold text-muted/40 tracking-widest uppercase">
-        Naizen Tools
-      </span>
+      <div className="no-drag flex items-baseline gap-2">
+        <span className="text-xs font-mono font-semibold text-muted/40 tracking-widest uppercase">
+          Naizen Tools
+        </span>
+        <span className="text-xs font-mono text-muted/20">v{__APP_VERSION__}</span>
+      </div>
       <div className="no-drag flex items-center gap-1">
         <button
           onClick={onPatchNotes}

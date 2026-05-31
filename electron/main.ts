@@ -151,9 +151,10 @@ function sleep(ms: number): Promise<void> {
 
 let afkPresses = 0
 let afkNextTick = 0
+let afkEnterNextTick = 0
 let afkTickTimer: ReturnType<typeof setTimeout> | null = null
 
-async function afkLoop(sHold: number, intervalMs: number, windowTitle: string) {
+async function afkLoop(sHold: number, intervalMs: number, windowTitle: string, enterEnabled: boolean, enterIntervalMs: number) {
   if (stopFlags['afk']) return
   await loadNut()
 
@@ -169,6 +170,15 @@ async function afkLoop(sHold: number, intervalMs: number, windowTitle: string) {
     afkNextTick = now + intervalMs
   }
 
+  if (enterEnabled && now >= afkEnterNextTick) {
+    await withGameFocus(windowTitle, async () => {
+      await nutKeyboard!.pressKey(nutKey!.Return)
+      await sleep(50)
+      await nutKeyboard!.releaseKey(nutKey!.Return)
+    })
+    afkEnterNextTick = now + enterIntervalMs
+  }
+
   const remaining = Math.max(0, afkNextTick - Date.now())
   win?.webContents.send('afk:tick', {
     remaining: Math.floor(remaining / 1000),
@@ -176,7 +186,7 @@ async function afkLoop(sHold: number, intervalMs: number, windowTitle: string) {
   })
 
   if (!stopFlags['afk']) {
-    afkTickTimer = setTimeout(() => afkLoop(sHold, intervalMs, windowTitle), 250)
+    afkTickTimer = setTimeout(() => afkLoop(sHold, intervalMs, windowTitle, enterEnabled, enterIntervalMs), 250)
   }
 }
 
@@ -244,8 +254,11 @@ function setupIpc() {
       const sHold = (config['sHold'] as number) || 200
       const intervalMs = (config['intervalMs'] as number) || 400000
       const windowTitle = (config['windowTitle'] as string) ?? ''
+      const enterEnabled = (config['enterEnabled'] as boolean) ?? false
+      const enterIntervalMs = (config['enterIntervalMs'] as number) || 60000
       afkPresses = 0
       afkNextTick = Date.now() + intervalMs
+      afkEnterNextTick = Date.now() + enterIntervalMs
 
       // W durchgehend halten während Anti-AFK läuft
       await loadNut()
@@ -257,7 +270,7 @@ function setupIpc() {
       }
       setTimeout(wPulse, 200)
 
-      afkLoop(sHold, intervalMs, windowTitle)
+      afkLoop(sHold, intervalMs, windowTitle, enterEnabled, enterIntervalMs)
     } else if (tool === 'whold') {
       wholdLoop()
     } else if (tool === 'clicker') {
@@ -397,6 +410,10 @@ function createWindow() {
   win.on('close', (e) => {
     e.preventDefault()
     win?.hide()
+  })
+
+  win.on('hide', () => {
+    if (!tray || tray.isDestroyed()) createTray()
   })
 }
 

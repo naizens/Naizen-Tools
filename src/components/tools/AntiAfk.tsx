@@ -18,6 +18,8 @@ export default memo(function AntiAfk() {
   const setIntervalMs = useCallback((v: number) => setConfig('afk', { intervalMs: v }), [setConfig])
   const setWindowTitle = useCallback((t: string) => setConfig('afk', { windowTitle: t }), [setConfig])
   const setHotkey = useCallback((raw: string | null) => setConfig('afk', { hotkey: raw }), [setConfig])
+  const setEnterEnabled = useCallback(() => setConfig('afk', { enterEnabled: !config.enterEnabled }), [setConfig, config.enterEnabled])
+  const setEnterIntervalMs = useCallback((v: number) => setConfig('afk', { enterIntervalMs: v * 1000 }), [setConfig])
 
   const toggle = useCallback(() => {
     if (running) {
@@ -55,6 +57,26 @@ export default memo(function AntiAfk() {
           max={3600000}
           suffix="ms"
         />
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-mono text-muted/50">Enter-Taste</span>
+          <button
+            onClick={setEnterEnabled}
+            disabled={running}
+            className={`w-9 h-5 rounded-full transition-colors relative flex items-center ${config.enterEnabled ? 'bg-accent' : 'bg-surface/20'} disabled:opacity-40`}
+          >
+            <span className={`absolute w-4 h-4 rounded-full bg-white transition-transform ${config.enterEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+          </button>
+        </div>
+        {config.enterEnabled && (
+          <Spinbox
+            label="Enter-Pause"
+            value={Math.round(config.enterIntervalMs / 1000)}
+            onChange={setEnterIntervalMs}
+            min={1}
+            max={3600}
+            suffix="s"
+          />
+        )}
         <WindowPicker value={config.windowTitle} onChange={setWindowTitle} />
         <HotkeyBox tool="afk" value={config.hotkey} onChange={setHotkey} disabled={running} />
       </div>
