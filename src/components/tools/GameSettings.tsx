@@ -44,7 +44,7 @@ export default memo(function GameSettings() {
   }, [running, config])
 
   return (
-    <Panel title="Spiel-Einstellungen">
+    <Panel title="Game Settings">
       <div className="flex items-center justify-between mb-4">
         <StatusBadge running={running} />
       </div>
@@ -53,11 +53,11 @@ export default memo(function GameSettings() {
         <WindowPicker value={config.windowTitle} onChange={setWindowTitle} />
 
         <div className="pt-1 border-t border-surface/10">
-          <p className="text-xs font-mono text-muted/30 mb-3 uppercase tracking-wider">FPS-Limit</p>
+          <p className="text-xs font-mono text-muted/30 mb-3 uppercase tracking-wider">FPS Limit</p>
 
           <div className="space-y-3">
             <Spinbox
-              label="Vordergrund"
+              label="Foreground"
               value={config.fgFps}
               onChange={setFgFps}
               min={0}
@@ -65,7 +65,7 @@ export default memo(function GameSettings() {
               suffix="fps"
             />
             <Spinbox
-              label="Hintergrund"
+              label="Background"
               value={config.bgFps}
               onChange={setBgFps}
               min={0}
@@ -75,14 +75,14 @@ export default memo(function GameSettings() {
           </div>
 
           <p className="text-xs font-mono text-muted/25 mt-2">
-            0 = unbegrenzt
+            0 = unlimited
           </p>
         </div>
 
         <div className="pt-1 border-t border-surface/10">
           <p className="text-xs font-mono text-muted/30 mb-1 uppercase tracking-wider">Anti-Pause</p>
           <p className="text-xs font-mono text-muted/40">
-            Verhindert Spiel-Pause bei Tab-Out via WH_CALLWNDPROC + DXGI Present-Hook
+            Prevents the game from pausing on tab-out via WH_CALLWNDPROC + DXGI Present hook
           </p>
         </div>
         <HotkeyBox tool="game" value={config.hotkey} onChange={setHotkey} disabled={running} />
@@ -93,12 +93,12 @@ export default memo(function GameSettings() {
         onClick={toggle}
         disabled={!config.windowTitle}
       >
-        {running ? 'Stoppen' : 'Starten'}
+        {running ? 'Stop' : 'Start'}
       </Button>
 
       {!config.windowTitle && (
         <p className="text-xs font-mono text-muted/30 mt-2 text-center">
-          Spiel-Fenster auswählen um zu starten
+          Select a game window to start
         </p>
       )}
     </Panel>

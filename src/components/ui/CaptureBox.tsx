@@ -16,7 +16,7 @@ export default function CaptureBox({ label, capturing, onCapture }: Props) {
           : 'border-surface/20 text-muted/50 hover:border-surface/40',
       ].join(' ')}
     >
-      {capturing ? '● Taste drücken…' : label}
+      {capturing ? '● Press a key…' : label}
     </button>
   )
 }

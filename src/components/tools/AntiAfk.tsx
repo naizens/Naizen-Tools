@@ -35,7 +35,7 @@ export default memo(function AntiAfk() {
         <StatusBadge running={running} />
         {running && (
           <span className="text-xs font-mono text-muted/40">
-            {afkPresses} Drücke · {afkRemaining}s
+            {afkPresses} presses · {afkRemaining}s
           </span>
         )}
       </div>
@@ -58,7 +58,7 @@ export default memo(function AntiAfk() {
           suffix="ms"
         />
         <div className="flex items-center justify-between">
-          <span className="text-xs font-mono text-muted/50">Enter-Taste</span>
+          <span className="text-xs font-mono text-muted/50">Enter Key</span>
           <button
             onClick={setEnterEnabled}
             disabled={running}
@@ -69,7 +69,7 @@ export default memo(function AntiAfk() {
         </div>
         {config.enterEnabled && (
           <Spinbox
-            label="Enter-Pause"
+            label="Enter Interval"
             value={Math.round(config.enterIntervalMs / 1000)}
             onChange={setEnterIntervalMs}
             min={1}
@@ -82,7 +82,7 @@ export default memo(function AntiAfk() {
       </div>
 
       <Button variant={running ? 'danger' : 'primary'} onClick={toggle}>
-        {running ? 'Stoppen' : 'Starten'}
+        {running ? 'Stop' : 'Start'}
       </Button>
     </Panel>
   )

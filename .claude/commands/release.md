@@ -32,18 +32,18 @@ Vollautomatischer Release nach den Branch-Regeln aus CLAUDE.md.
    git merge dev --no-ff -m "chore: merge dev into main for release"
    ```
 
-5. Patch Notes in der App aktualisieren (`src/components/tools/PatchNotes.tsx`):
-   - Neue `version` = die neue Versionsnummer (z.B. `"0.2.0"`)
-   - `date` = heutiges Datum auf Deutsch (z.B. `"31. Mai 2026"`)
-   - `sections` aus den Commits seit dem letzten Tag ableiten:
-     - `git log <letzter-tag>..HEAD --oneline` ausführen
-     - `feat`-Commits → Section `{ label: 'Neu', color: 'text-success' }`
-     - `fix`/`bug-fix`-Commits → Section `{ label: 'Behoben', color: 'text-warn' }`
-     - `perf`/`refactor`-Commits → Section `{ label: 'Verbessert', color: 'text-accent' }`
-   - **Sprache der Items:** Einfach, allgemeinverständlich — keine Fachbegriffe, keine technischen Details.
-     Schreibe so, als würdest du es jemandem erklären, der die App einfach nur benutzt.
-     Schlecht: `"Refaktorierung des IPC-Handlers"` — Gut: `"App reagiert jetzt schneller auf Tastendrücke"`
-     Schlecht: `"Fix: Race condition im AutoClicker"` — Gut: `"Auto-Klicker stoppt nicht mehr unerwartet"`
+5. Update patch notes in the app (`src/components/tools/PatchNotes.tsx`):
+   - New `version` = the new version number (e.g. `"0.4.0"`)
+   - `date` = today's date in English (e.g. `"May 31, 2026"`)
+   - Build `sections` from commits since the last tag:
+     - Run `git log <last-tag>..HEAD --oneline`
+     - `feat` commits → Section `{ label: 'New', color: 'text-success' }`
+     - `fix`/`bug-fix` commits → Section `{ label: 'Fixed', color: 'text-warn' }`
+     - `perf`/`refactor` commits → Section `{ label: 'Improved', color: 'text-accent' }`
+   - **Language:** Simple, plain English — no jargon, no technical details.
+     Write as if explaining to someone who just uses the app.
+     Bad: `"Refactored IPC handler"` — Good: `"App responds faster to keypresses"`
+     Bad: `"Fix: race condition in AutoClicker"` — Good: `"Auto Clicker no longer stops unexpectedly"`
    - Den neuen Eintrag **oben** ins `ENTRIES`-Array einfügen (neueste Version zuerst)
    - Danach committen:
      ```

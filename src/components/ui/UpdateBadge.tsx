@@ -11,10 +11,10 @@ export default function UpdateBadge() {
         !updateDownloading && !updateReady ? 'animate-pulse' : '',
       ].join(' ')}>
         {updateReady
-          ? '● Update heruntergeladen'
+          ? '● Update downloaded'
           : updateDownloading
-            ? '● Wird heruntergeladen…'
-            : 'Neues Update verfügbar'}
+            ? '● Downloading…'
+            : 'New update available'}
       </span>
 
       {updateReady ? (
@@ -22,14 +22,14 @@ export default function UpdateBadge() {
           onClick={() => window.api.updateInstall()}
           className="text-xs font-mono font-semibold text-amber hover:text-amber/70 transition-colors shrink-0"
         >
-          Jetzt neu starten →
+          Restart now →
         </button>
       ) : !updateDownloading ? (
         <button
           onClick={() => window.api.updateDownload()}
           className="shrink-0 px-3 py-1 rounded-md bg-amber/20 border border-amber/30 text-xs font-mono font-semibold text-amber hover:bg-amber/30 transition-colors"
         >
-          Jetzt installieren
+          Install now
         </button>
       ) : null}
     </div>

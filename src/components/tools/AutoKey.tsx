@@ -35,26 +35,26 @@ export default memo(function AutoKey() {
   }, [running, config])
 
   return (
-    <Panel title="Auto-Taste">
+    <Panel title="Auto Key">
       <div className="flex items-center justify-between mb-4">
         <StatusBadge running={running} />
       </div>
       <div className="mb-4">
         <CaptureBox
-          label={`Taste: ${config.keyLabel} — klicken zum Ändern`}
+          label={`Key: ${config.keyLabel} — click to change`}
           capturing={capturing}
           onCapture={startCapture}
         />
       </div>
       <div className="flex flex-wrap gap-4 mb-4">
-        <Spinbox label="Gedrückt" value={config.downMs} onChange={setDownMs} min={10} max={5000} suffix="ms" />
+        <Spinbox label="Hold" value={config.downMs} onChange={setDownMs} min={10} max={5000} suffix="ms" />
         <Spinbox label="Pause" value={config.upMs} onChange={setUpMs} min={10} max={5000} suffix="ms" />
       </div>
       <div className="mb-4">
         <HotkeyBox tool="autokey" value={config.hotkey} onChange={setHotkey} disabled={running} />
       </div>
       <Button variant={running ? 'danger' : 'primary'} disabled={!config.key} onClick={toggle}>
-        {running ? 'Stoppen' : 'Starten'}
+        {running ? 'Stop' : 'Start'}
       </Button>
     </Panel>
   )
