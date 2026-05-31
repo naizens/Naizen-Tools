@@ -34,6 +34,8 @@ extraResources:
 
 publish:
   provider: github
+  owner: naizens
+  repo: Naizen-Tools
   releaseType: release
 
 compression: maximum

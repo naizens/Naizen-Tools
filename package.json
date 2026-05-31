@@ -16,6 +16,10 @@
   "keywords": [],
   "author": "Naizen",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/naizens/Naizen-Tools.git"
+  },
   "dependencies": {
     "@nut-tree-fork/nut-js": "^4.2.6",
     "electron-updater": "^6.3.9",

@@ -443,9 +443,11 @@ function createTray() {
 
 function setupUpdater() {
   autoUpdater.autoDownload = false
+  autoUpdater.on('update-available',    () => win?.webContents.send('update:available'))
+  autoUpdater.on('download-progress',   () => win?.webContents.send('update:downloading'))
+  autoUpdater.on('update-downloaded',   () => win?.webContents.send('update:ready'))
+  autoUpdater.on('error',               (e) => console.error('[updater]', e.message))
   autoUpdater.checkForUpdates()
-  autoUpdater.on('update-available',  () => win?.webContents.send('update:available'))
-  autoUpdater.on('update-downloaded', () => win?.webContents.send('update:ready'))
 }
 
 // ─── App-Lifecycle ───────────────────────────────────────────────────────────
