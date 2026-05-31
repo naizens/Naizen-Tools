@@ -13,67 +13,67 @@ interface Entry {
 const ENTRIES: Entry[] = [
   {
     version: '0.3.0',
-    date: '31. Mai 2026',
+    date: 'May 31, 2026',
     sections: [
       {
-        label: 'Neu',
+        label: 'New',
         color: 'text-success',
         items: [
-          'Enter-Taste — Anti-AFK drückt jetzt automatisch Enter in einem eigenen Intervall',
-          'Versionsnummer — wird jetzt oben im Fenster angezeigt',
+          'Enter Key — Anti-AFK can now automatically press Enter on its own interval',
+          'Version Number — now shown in the title bar',
         ],
       },
       {
-        label: 'Behoben',
+        label: 'Fixed',
         color: 'text-warn',
         items: [
-          'System Tray — Icon verschwand nach dem Minimieren nicht mehr',
+          'System Tray — icon no longer disappears when minimizing the app',
         ],
       },
     ],
   },
   {
     version: '0.2.1',
-    date: '28. Mai 2026',
+    date: 'May 28, 2026',
     sections: [
       {
-        label: 'Bugfix',
-        color: 'text-warning',
+        label: 'Fixed',
+        color: 'text-warn',
         items: [
-          'App-Icon — wird jetzt korrekt in 256×256 angezeigt (kein verpixeltes Icon mehr im Installer)',
+          'App Icon — now displays correctly at 256×256 (no more blurry icon in the installer)',
         ],
       },
     ],
   },
   {
     version: '0.2.0',
-    date: '28. Mai 2026',
+    date: 'May 28, 2026',
     sections: [
       {
-        label: 'Intern',
+        label: 'Internal',
         color: 'text-muted',
         items: [
-          'Release-Pipeline — automatische GitHub Releases und Updates über Actions eingerichtet',
+          'Release Pipeline — set up automatic GitHub Releases and updates via Actions',
         ],
       },
     ],
   },
   {
     version: '0.1.0',
-    date: '28. Mai 2026',
+    date: 'May 28, 2026',
     sections: [
       {
-        label: 'Neu',
+        label: 'New',
         color: 'text-success',
         items: [
-          'Anti-AFK — verhindert automatisch, dass du wegen Inaktivität aus dem Spiel geworfen wirst',
-          'W-Hold — hält W dauerhaft gedrückt, damit du dich ohne Tastendruck vorwärtsbewegst',
-          'Auto-Klicker — klickt automatisch für dich, so oft und so schnell du willst',
-          'Auto-Taste — drückt eine beliebige Taste automatisch im eingestellten Takt',
-          'Design — wähle zwischen hellem und dunklem Aussehen',
-          'Navigation — wechsle mit einem Klick zwischen den Tools',
-          'System Tray — die App läuft im Hintergrund weiter, auch wenn du sie minimierst',
-          'Automatische Updates — die App hält sich selbst auf dem neuesten Stand',
+          'Anti-AFK — automatically prevents you from getting kicked for inactivity',
+          'W-Hold — keeps W held down so you move forward without touching the keyboard',
+          'Auto Clicker — clicks automatically for you, as fast and as often as you want',
+          'Auto Key — presses any key automatically at a set interval',
+          'Design — choose between light and dark theme',
+          'Navigation — switch between tools with a single click',
+          'System Tray — the app keeps running in the background when minimized',
+          'Auto Updates — the app keeps itself up to date automatically',
         ],
       },
     ],
@@ -158,7 +158,7 @@ export default memo(function PatchNotes({ onClose }: Props) {
 
         {/* Footer */}
         <div className="px-5 py-3 border-t border-surface/10 flex justify-end">
-          <span className="text-xs font-mono text-muted/20">ESC zum Schließen</span>
+          <span className="text-xs font-mono text-muted/20">ESC to close</span>
         </div>
       </div>
     </div>

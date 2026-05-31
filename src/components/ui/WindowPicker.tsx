@@ -70,10 +70,10 @@ export default function WindowPicker({ value, onChange }: Props) {
       className="rounded-md bg-app border border-surface/15 shadow-2xl overflow-hidden"
     >
       {loading ? (
-        <div className="px-4 py-3 text-xs font-mono text-muted/40">Lädt…</div>
+        <div className="px-4 py-3 text-xs font-mono text-muted/40">Loading…</div>
       ) : filtered.length === 0 ? (
         <div className="px-4 py-3 text-xs font-mono text-muted/40">
-          {query ? 'Kein Treffer' : 'Keine Fenster gefunden'}
+          {query ? 'No match' : 'No windows found'}
         </div>
       ) : (
         <div className="max-h-52 overflow-y-auto">
@@ -103,7 +103,7 @@ export default function WindowPicker({ value, onChange }: Props) {
 
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-xs font-mono text-muted/40">Spiel-Fenster</span>
+      <span className="text-xs font-mono text-muted/40">Game Window</span>
       <div className="flex gap-2" ref={wrapperRef}>
         <div className="flex-1 flex items-center gap-2.5 bg-surface/10 border border-surface/15 rounded-md px-3 h-9 min-w-0 focus-within:border-accent/40 transition-colors">
           {!open && selected?.icon && (
@@ -112,7 +112,7 @@ export default function WindowPicker({ value, onChange }: Props) {
           <input
             ref={inputRef}
             value={open ? query : value}
-            placeholder={open ? 'Filtern…' : 'Fenster auswählen…'}
+            placeholder={open ? 'Filter…' : 'Select window…'}
             onFocus={openPicker}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 min-w-0 bg-transparent text-xs font-mono text-muted/70 placeholder:text-muted/30 focus:outline-none"

@@ -1,31 +1,31 @@
-# /commit — Konventioneller Commit
+# /commit — Conventional Commit
 
-Erstelle einen Conventional Commit nach den Projektregeln aus CLAUDE.md.
+Create a Conventional Commit following the project rules from CLAUDE.md.
 
-## Ablauf
+## Steps
 
-1. Führe `git status` und `git diff` aus um die Änderungen zu sehen
-2. Führe `npm run lint` aus — behebe etwaige Fehler, bevor du weiter machst
-3. Leite Typ, Scope und Beschreibung aus den Änderungen ab (oder frage kurz nach)
-4. Baue die Commit-Message:
+1. Run `git status` and `git diff` to see the changes
+2. Run `npm run lint` — fix any errors before proceeding
+3. Derive type, scope, and description from the changes (or ask briefly)
+4. Build the commit message:
    ```
-   <type>(<scope>): <Beschreibung auf Deutsch, Imperativ, max 72 Zeichen>
+   <type>(<scope>): <description in English, imperative, max 72 chars>
    ```
-5. Stage relevante Dateien und erstelle den Commit
+5. Stage relevant files and create the commit
 
-## Typen
-| Typ | Wann |
+## Types
+| Type | When |
 |---|---|
-| feat | Neue Funktion |
-| fix | Bugfix |
-| chore | Config, Dependencies, Tooling |
-| style | Nur Styling (Tailwind, Farben) |
-| refactor | Umbau ohne Verhaltensänderung |
-| perf | Performance-Verbesserung |
-| docs | Nur Dokumentation |
+| feat | New feature |
+| fix | Bug fix |
+| chore | Config, dependencies, tooling |
+| style | Styling only (Tailwind, colors) |
+| refactor | Restructure without behavior change |
+| perf | Performance improvement |
+| docs | Documentation only |
 
-## Regeln
-- Beschreibung: Deutsch, Imperativ, kein Punkt am Ende
-- Scope optional, in Klammern: `feat(auto-clicker): ...`
-- Body nur wenn das Warum nicht offensichtlich ist
-- Niemals direkt auf `main` committen
+## Rules
+- Description: English, imperative, no trailing period
+- Scope optional, in parentheses: `feat(auto-clicker): ...`
+- Body only if the why is not obvious
+- Never commit directly to `main`

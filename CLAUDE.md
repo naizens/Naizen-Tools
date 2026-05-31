@@ -43,9 +43,9 @@ StatusBadge: text-success (aktiv) | text-muted/40 (gestoppt)
 - UPX nicht verwenden (Antivirus-Fehlalarme)
 
 ## Commits (Conventional Commits)
-Format: `<type>(<scope>): <Beschreibung>`
+Format: `<type>(<scope>): <description>`
 Typen: feat, fix, chore, style, refactor, perf, docs
-Sprache: Deutsch, Imperativ, max. 72 Zeichen
+Sprache: Englisch, Imperativ, max. 72 Zeichen
 
 ## Branches
 - `main` — nur getaggte Releases; direkte Commits verboten

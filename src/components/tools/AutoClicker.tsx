@@ -11,9 +11,9 @@ type MouseButton = 'left' | 'right' | 'middle'
 
 const BUTTONS: MouseButton[] = ['left', 'right', 'middle']
 const BUTTON_LABELS: Record<MouseButton, string> = {
-  left: 'Links',
-  right: 'Rechts',
-  middle: 'Mitte',
+  left: 'Left',
+  right: 'Right',
+  middle: 'Middle',
 }
 
 export default memo(function AutoClicker() {
@@ -45,7 +45,7 @@ export default memo(function AutoClicker() {
   }, [running, config])
 
   return (
-    <Panel title="Auto-Klicker">
+    <Panel title="Auto Clicker">
       <div className="flex items-center justify-between mb-4">
         <StatusBadge running={running} />
       </div>
@@ -67,19 +67,19 @@ export default memo(function AutoClicker() {
       </div>
       <div className="mb-4">
         <CaptureBox
-          label={`Taste: ${BUTTON_LABELS[config.button]} — klicken zum Ändern`}
+          label={`Button: ${BUTTON_LABELS[config.button]} — click to change`}
           capturing={capturing}
           onCapture={startCapture}
         />
       </div>
       <div className="mb-4">
-        <Spinbox label="Intervall" value={config.intervalMs} onChange={setInterval_} min={10} max={60000} suffix="ms" />
+        <Spinbox label="Interval" value={config.intervalMs} onChange={setInterval_} min={10} max={60000} suffix="ms" />
       </div>
       <div className="mb-4">
         <HotkeyBox tool="clicker" value={config.hotkey} onChange={setHotkey} disabled={running} />
       </div>
       <Button variant={running ? 'danger' : 'primary'} onClick={toggle}>
-        {running ? 'Stoppen' : 'Starten'}
+        {running ? 'Stop' : 'Start'}
       </Button>
     </Panel>
   )
