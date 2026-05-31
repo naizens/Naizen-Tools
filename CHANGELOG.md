@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.1](https://github.com/naizens/Naizen-Tools/compare/v0.3.0...v0.3.1) (2026-05-31)
+
+### Bug Fixes
+
+* **updater:** repository-Feld, owner/repo explizit, Listener-Reihenfolge + Error-Handler ([e3ff5fb](https://github.com/naizens/Naizen-Tools/commit/e3ff5fbde0f240b4c38eaf8208def4d090e0631b))
+
 ## [0.3.0](https://github.com/naizens/Naizen-Tools/compare/v0.2.1...v0.3.0) (2026-05-31)
 
 ### Features
