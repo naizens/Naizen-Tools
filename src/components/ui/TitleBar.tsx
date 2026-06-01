@@ -1,5 +1,4 @@
-import { Moon, Minus, Settings, Square, Sun, X } from 'lucide-react'
-import { useToolStore } from '@/store/toolStore'
+import { Minus, Settings, Square, X } from 'lucide-react'
 
 interface Props {
   onPatchNotes: () => void
@@ -7,8 +6,6 @@ interface Props {
 }
 
 export default function TitleBar({ onPatchNotes, onSettings }: Props) {
-  const theme = useToolStore((s) => s.theme)
-  const setTheme = useToolStore((s) => s.setTheme)
 
   return (
     <div className="drag flex items-center justify-between h-10 px-4 shrink-0 border-b border-surface/10">
@@ -31,13 +28,6 @@ export default function TitleBar({ onPatchNotes, onSettings }: Props) {
           title="Einstellungen"
         >
           <Settings size={14} />
-        </button>
-        <button
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="w-7 h-7 rounded-md flex items-center justify-center text-muted/40 hover:text-muted/80 hover:bg-surface/10 transition-colors"
-          title="Toggle theme"
-        >
-          {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
         </button>
         <button
           onClick={() => window.api.windowMinimize()}

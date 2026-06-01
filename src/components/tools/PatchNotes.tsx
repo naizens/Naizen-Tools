@@ -13,6 +13,20 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   {
+    version: '0.4.7',
+    date: 'June 1, 2026',
+    sections: [
+      {
+        label: 'Improved',
+        color: 'text-accent',
+        items: [
+          'Theme — toggle moved to Settings, removed from the title bar',
+          'Update — restart button is now a proper visible button',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.4.6',
     date: 'June 1, 2026',
     sections: [
