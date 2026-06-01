@@ -1,6 +1,6 @@
 {
   "name": "naizen-tools",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Naizen-Tools – Key Injector & AFK Utility",
   "main": "out/main/main.js",
   "scripts": {

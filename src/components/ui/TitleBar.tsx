@@ -1,4 +1,4 @@
-import { Moon, Minus, ScrollText, Settings, Square, Sun, X } from 'lucide-react'
+import { Moon, Minus, Settings, Square, Sun, X } from 'lucide-react'
 import { useToolStore } from '@/store/toolStore'
 
 interface Props {
@@ -16,7 +16,13 @@ export default function TitleBar({ onPatchNotes, onSettings }: Props) {
         <span className="text-xs font-mono font-semibold text-muted/40 tracking-widest uppercase">
           Naizen Tools
         </span>
-        <span className="text-xs font-mono text-muted/20">v{__APP_VERSION__}</span>
+        <button
+          onClick={onPatchNotes}
+          className="text-xs font-mono text-muted/20 hover:text-muted/50 transition-colors"
+          title="Patch Notes"
+        >
+          v{__APP_VERSION__}
+        </button>
       </div>
       <div className="no-drag flex items-center gap-1">
         <button
@@ -25,13 +31,6 @@ export default function TitleBar({ onPatchNotes, onSettings }: Props) {
           title="Einstellungen"
         >
           <Settings size={14} />
-        </button>
-        <button
-          onClick={onPatchNotes}
-          className="w-7 h-7 rounded-md flex items-center justify-center text-muted/40 hover:text-muted/80 hover:bg-surface/10 transition-colors"
-          title="Patch Notes"
-        >
-          <ScrollText size={14} />
         </button>
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}

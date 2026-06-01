@@ -13,6 +13,19 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   {
+    version: '0.4.4',
+    date: 'June 1, 2026',
+    sections: [
+      {
+        label: 'Improved',
+        color: 'text-accent',
+        items: [
+          'Version number — click it in the title bar to open patch notes',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.4.3',
     date: 'June 1, 2026',
     sections: [
