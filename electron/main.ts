@@ -372,8 +372,7 @@ function setupIpc() {
   ipcMain.on('window:minimize', () => win?.minimize())
   ipcMain.on('window:maximize', () => (win?.isMaximized() ? win.unmaximize() : win?.maximize()))
   ipcMain.on('window:close', () => win?.hide())
-  ipcMain.on('update:download', () => autoUpdater.downloadUpdate())
-  ipcMain.on('update:install',  () => autoUpdater.quitAndInstall())
+  ipcMain.on('update:install', () => autoUpdater.quitAndInstall())
 
   ipcMain.handle('autostart:get', () => app.getLoginItemSettings().openAtLogin)
   ipcMain.handle('autostart:set', (_, { enabled }: { enabled: boolean }) => {
@@ -448,22 +447,21 @@ function createTray() {
 
 // ─── Auto-Updater ────────────────────────────────────────────────────────────
 
-function setupUpdater() {
-  autoUpdater.autoDownload = false
-  autoUpdater.on('update-available',    () => win?.webContents.send('update:available'))
-  autoUpdater.on('download-progress',   () => win?.webContents.send('update:downloading'))
-  autoUpdater.on('update-downloaded',   () => win?.webContents.send('update:ready'))
-  autoUpdater.on('error',               (e) => console.error('[updater]', e.message))
-  autoUpdater.checkForUpdates()
-}
-
 // ─── App-Lifecycle ───────────────────────────────────────────────────────────
 
 app.whenReady().then(() => {
   setupIpc()
   createWindow()
   createTray()
-  if (process.env['NODE_ENV'] !== 'development') setupUpdater()
+
+  if (app.isPackaged) {
+    autoUpdater.autoDownload = true
+    autoUpdater.autoInstallOnAppQuit = false
+    autoUpdater.on('update-available',  () => win?.webContents.send('update:available'))
+    autoUpdater.on('update-downloaded', () => win?.webContents.send('update:ready'))
+    autoUpdater.on('error', (e) => console.error('[updater]', e.message))
+    autoUpdater.checkForUpdates()
+  }
 })
 
 app.on('window-all-closed', () => { /* tray handles quit */ })

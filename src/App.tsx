@@ -49,8 +49,7 @@ export default function App() {
     window.api.onAfkTick(({ remaining, presses }) => {
       setAfkTick(remaining, presses)
     })
-    window.api.onUpdateAvailable(() => setUpdateAvailable())
-    window.api.onUpdateDownloading(() => setUpdateDownloading())
+    window.api.onUpdateAvailable(() => { setUpdateAvailable(); setUpdateDownloading() })
     window.api.onUpdateReady(() => setUpdateReady())
 
     // Re-register persisted hotkeys after app start

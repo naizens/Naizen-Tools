@@ -14,7 +14,6 @@ interface Window {
     windowMinimize: () => void
     windowMaximize: () => void
     windowClose: () => void
-    updateDownload: () => void
     updateInstall: () => void
     windowsList: () => Promise<WindowInfo[]>
     setGameFps: (fg: number, bg: number) => Promise<void>
@@ -24,9 +23,8 @@ interface Window {
     onCaptureResult: (cb: (data: { label: string; value: string }) => void) => void
     onAfkTick: (cb: (data: { remaining: number; presses: number }) => void) => void
     onHotkeyTrigger: (cb: (data: { tool: string }) => void) => void
-    onUpdateAvailable:   (cb: () => void) => void
-    onUpdateDownloading: (cb: () => void) => void
-    onUpdateReady:       (cb: () => void) => void
+    onUpdateAvailable: (cb: () => void) => void
+    onUpdateReady:     (cb: () => void) => void
     getAutostart: () => Promise<boolean>
     setAutostart: (enabled: boolean) => Promise<void>
   }
