@@ -13,6 +13,20 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   {
+    version: '0.4.6',
+    date: 'June 1, 2026',
+    sections: [
+      {
+        label: 'New',
+        color: 'text-success',
+        items: [
+          'Window state — size, position, and maximized state are remembered across restarts',
+          'Multi-monitor — the app reopens on the same screen it was closed on',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.4.5',
     date: 'June 1, 2026',
     sections: [

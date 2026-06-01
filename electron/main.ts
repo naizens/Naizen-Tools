@@ -1,10 +1,43 @@
-import { app, BrowserWindow, ipcMain, Menu, Tray, shell, globalShortcut } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, screen, Tray, shell, globalShortcut } from 'electron'
 import { join } from 'path'
+import { readFileSync, writeFileSync } from 'fs'
 import { autoUpdater } from 'electron-updater'
 
 let win: BrowserWindow | null = null
 let tray: Tray | null = null
 let closeAction: 'minimize' | 'quit' = 'minimize'
+
+// ─── Window State ─────────────────────────────────────────────────────────────
+
+interface WinState { width: number; height: number; x: number; y: number; maximized: boolean }
+
+const DEFAULT_WIN: WinState = { width: 420, height: 700, x: -1, y: -1, maximized: false }
+
+function winStatePath() {
+  return join(app.getPath('userData'), 'window-state.json')
+}
+
+function loadWinState(): WinState {
+  try {
+    const raw = JSON.parse(readFileSync(winStatePath(), 'utf-8')) as WinState
+    // Validate that the saved position is still on a connected display
+    const onScreen = screen.getAllDisplays().some((d) => {
+      const b = d.bounds
+      return raw.x >= b.x && raw.y >= b.y &&
+             raw.x < b.x + b.width && raw.y < b.y + b.height
+    })
+    return onScreen ? raw : { ...DEFAULT_WIN }
+  } catch {
+    return { ...DEFAULT_WIN }
+  }
+}
+
+function saveWinState() {
+  if (!win) return
+  const maximized = win.isMaximized()
+  const { x, y, width, height } = maximized ? win.getNormalBounds() : win.getBounds()
+  writeFileSync(winStatePath(), JSON.stringify({ width, height, x, y, maximized }))
+}
 
 // ─── Automation-State ────────────────────────────────────────────────────────
 const stopFlags: Record<string, boolean> = {
@@ -385,9 +418,12 @@ function setupIpc() {
 // ─── Fenster ─────────────────────────────────────────────────────────────────
 
 function createWindow() {
+  const state = loadWinState()
+
   win = new BrowserWindow({
-    width: 420,
-    height: 700,
+    width: state.width,
+    height: state.height,
+    ...(state.x !== -1 ? { x: state.x, y: state.y } : {}),
     minWidth: 380,
     minHeight: 500,
     frame: false,
@@ -399,6 +435,8 @@ function createWindow() {
       sandbox: true,
     },
   })
+
+  if (state.maximized) win.maximize()
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)
@@ -414,6 +452,7 @@ function createWindow() {
   }
 
   win.on('close', (e) => {
+    saveWinState()
     if (closeAction === 'quit') return
     e.preventDefault()
     win?.hide()
@@ -439,6 +478,7 @@ function createTray() {
       {
         label: 'Quit',
         click: () => {
+          saveWinState()
           Object.keys(stopFlags).forEach((k) => (stopFlags[k] = true))
           app.exit()
         },
