@@ -16,17 +16,11 @@ interface ToolState {
   config: ToolConfig
   afkPresses: number
   afkRemaining: number
-  updateAvailable: boolean
-  updateDownloading: boolean
-  updateReady: boolean
   setTheme: (t: 'dark' | 'light') => void
   setAutostart: (v: boolean) => void
   setConfig: <K extends keyof ToolConfig>(tool: K, cfg: Partial<ToolConfig[K]>) => void
   setRunning: (tool: keyof ToolConfig, running: boolean) => void
   setAfkTick: (remaining: number, presses: number) => void
-  setUpdateAvailable: () => void
-  setUpdateDownloading: () => void
-  setUpdateReady: () => void
 }
 
 export const useToolStore = create<ToolState>()(
@@ -51,9 +45,6 @@ export const useToolStore = create<ToolState>()(
 
       afkPresses: 0,
       afkRemaining: 0,
-      updateAvailable: false,
-      updateDownloading: false,
-      updateReady: false,
 
       setTheme: (theme) => set({ theme }),
       setAutostart: (autostart) => set({ autostart }),
@@ -79,10 +70,6 @@ export const useToolStore = create<ToolState>()(
 
       setAfkTick: (afkRemaining, afkPresses) =>
         set({ afkRemaining, afkPresses }),
-
-      setUpdateAvailable:    () => set({ updateAvailable: true }),
-      setUpdateDownloading:  () => set({ updateDownloading: true }),
-      setUpdateReady:        () => set({ updateDownloading: false, updateReady: true }),
     }),
     {
       name: 'naizen-tools-store',

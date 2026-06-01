@@ -22,11 +22,7 @@ export default function App() {
   const theme = useToolStore((s) => s.theme)
   const setRunning = useToolStore((s) => s.setRunning)
   const setAfkTick = useToolStore((s) => s.setAfkTick)
-  const setUpdateAvailable   = useToolStore((s) => s.setUpdateAvailable)
-  const setUpdateDownloading = useToolStore((s) => s.setUpdateDownloading)
-  const setUpdateReady       = useToolStore((s) => s.setUpdateReady)
-  const updateAvailable      = useToolStore((s) => s.updateAvailable)
-  const setAutostart         = useToolStore((s) => s.setAutostart)
+  const setAutostart = useToolStore((s) => s.setAutostart)
 
   const [activeTool, setActiveTool] = useState<Tool>('afk')
   const [patchNotesOpen, setPatchNotesOpen] = useState(false)
@@ -49,8 +45,6 @@ export default function App() {
     window.api.onAfkTick(({ remaining, presses }) => {
       setAfkTick(remaining, presses)
     })
-    window.api.onUpdateAvailable(() => { setUpdateAvailable(); setUpdateDownloading() })
-    window.api.onUpdateReady(() => setUpdateReady())
 
     // Re-register persisted hotkeys after app start
     const { config } = useToolStore.getState()
@@ -75,7 +69,7 @@ export default function App() {
   return (
     <div className="flex flex-col h-screen bg-app text-muted/80 select-none">
       <TitleBar onPatchNotes={() => setPatchNotesOpen(true)} onSettings={() => setSettingsOpen(true)} />
-      {updateAvailable && <UpdateBadge />}
+      <UpdateBadge />
       <Navbar active={activeTool} onChange={setActiveTool} />
       <main className="flex-1 overflow-y-auto px-4 pb-4 pt-4">
         <Suspense fallback={<ToolFallback />}>
