@@ -374,6 +374,11 @@ function setupIpc() {
   ipcMain.on('window:close', () => win?.hide())
   ipcMain.on('update:download', () => autoUpdater.downloadUpdate())
   ipcMain.on('update:install',  () => autoUpdater.quitAndInstall())
+
+  ipcMain.handle('autostart:get', () => app.getLoginItemSettings().openAtLogin)
+  ipcMain.handle('autostart:set', (_, { enabled }: { enabled: boolean }) => {
+    app.setLoginItemSettings({ openAtLogin: enabled })
+  })
 }
 
 // ─── Fenster ─────────────────────────────────────────────────────────────────
@@ -420,7 +425,9 @@ function createWindow() {
 // ─── Tray ────────────────────────────────────────────────────────────────────
 
 function createTray() {
-  const iconPath = join(__dirname, '../../assets/icon.png')
+  const iconPath = app.isPackaged
+    ? join(process.resourcesPath, 'assets/icon.png')
+    : join(__dirname, '..', '..', 'assets', 'icon.png')
   tray = new Tray(iconPath)
   tray.setToolTip('Naizen-Tools')
   tray.setContextMenu(

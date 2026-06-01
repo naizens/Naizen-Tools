@@ -1,3 +1,5 @@
+import { Circle } from 'lucide-react'
+
 interface Props {
   label: string
   capturing: boolean
@@ -16,7 +18,12 @@ export default function CaptureBox({ label, capturing, onCapture }: Props) {
           : 'border-surface/20 text-muted/50 hover:border-surface/40',
       ].join(' ')}
     >
-      {capturing ? '● Press a key…' : label}
+      {capturing ? (
+        <span className="flex items-center gap-2">
+          <Circle size={7} fill="currentColor" strokeWidth={0} />
+          Press a key…
+        </span>
+      ) : label}
     </button>
   )
 }

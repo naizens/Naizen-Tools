@@ -31,6 +31,8 @@ nsis:
 extraResources:
   - from: resources/anti_pause.dll
     to: anti_pause.dll
+  - from: assets/icon.png
+    to: assets/icon.png
 
 publish:
   provider: github

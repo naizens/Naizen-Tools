@@ -1,3 +1,5 @@
+import { Circle } from 'lucide-react'
+
 interface Props {
   running: boolean
 }
@@ -10,7 +12,8 @@ export default function StatusBadge({ running }: Props) {
         running ? 'text-success' : 'text-muted/40',
       ].join(' ')}
     >
-      ● {running ? 'aktiv' : 'gestoppt'}
+      <Circle size={7} fill="currentColor" strokeWidth={0} />
+      {running ? 'aktiv' : 'gestoppt'}
     </span>
   )
 }

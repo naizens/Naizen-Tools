@@ -10,6 +10,7 @@ const AutoClicker  = React.lazy(() => import('./components/tools/AutoClicker'))
 const AutoKey      = React.lazy(() => import('./components/tools/AutoKey'))
 const GameSettings = React.lazy(() => import('./components/tools/GameSettings'))
 const PatchNotes   = React.lazy(() => import('./components/tools/PatchNotes'))
+const Settings     = React.lazy(() => import('./components/tools/Settings'))
 
 function ToolFallback() {
   return (
@@ -24,16 +25,22 @@ export default function App() {
   const setUpdateAvailable   = useToolStore((s) => s.setUpdateAvailable)
   const setUpdateDownloading = useToolStore((s) => s.setUpdateDownloading)
   const setUpdateReady       = useToolStore((s) => s.setUpdateReady)
-  const updateAvailable = useToolStore((s) => s.updateAvailable)
+  const updateAvailable      = useToolStore((s) => s.updateAvailable)
+  const setAutostart         = useToolStore((s) => s.setAutostart)
 
   const [activeTool, setActiveTool] = useState<Tool>('afk')
   const [patchNotesOpen, setPatchNotesOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   useEffect(() => {
     const el = document.documentElement
     if (theme === 'dark') el.classList.add('dark')
     else el.classList.remove('dark')
   }, [theme])
+
+  useEffect(() => {
+    window.api.getAutostart().then(setAutostart)
+  }, [setAutostart])
 
   useEffect(() => {
     window.api.onToolStatus(({ tool, running }) => {
@@ -68,7 +75,7 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen bg-app text-muted/80 select-none">
-      <TitleBar onPatchNotes={() => setPatchNotesOpen(true)} />
+      <TitleBar onPatchNotes={() => setPatchNotesOpen(true)} onSettings={() => setSettingsOpen(true)} />
       {updateAvailable && <UpdateBadge />}
       <Navbar active={activeTool} onChange={setActiveTool} />
       <main className="flex-1 overflow-y-auto px-4 pb-4 pt-4">
@@ -82,6 +89,11 @@ export default function App() {
       {patchNotesOpen && (
         <Suspense fallback={null}>
           <PatchNotes onClose={() => setPatchNotesOpen(false)} />
+        </Suspense>
+      )}
+      {settingsOpen && (
+        <Suspense fallback={null}>
+          <Settings onClose={() => setSettingsOpen(false)} />
         </Suspense>
       )}
     </div>
