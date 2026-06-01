@@ -17,6 +17,9 @@ asarUnpack:
   - "**/uiohook-napi/**"
   - "**/node-window-manager/**"
   - "**/extract-file-icon/**"
+  - "**/irsdk-node/**"
+  - "**/sharp/**"
+  - "**/@img/**"
 
 win:
   target: nsis

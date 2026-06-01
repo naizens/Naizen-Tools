@@ -8,7 +8,8 @@ const AntiAfk      = React.lazy(() => import('./components/tools/AntiAfk'))
 const WHold        = React.lazy(() => import('./components/tools/WHold'))
 const AutoClicker  = React.lazy(() => import('./components/tools/AutoClicker'))
 const AutoKey      = React.lazy(() => import('./components/tools/AutoKey'))
-const GameSettings = React.lazy(() => import('./components/tools/GameSettings'))
+const GameSettings       = React.lazy(() => import('./components/tools/GameSettings'))
+const IracingScreenshot  = React.lazy(() => import('./components/tools/IracingScreenshot'))
 const PatchNotes   = React.lazy(() => import('./components/tools/PatchNotes'))
 const Settings     = React.lazy(() => import('./components/tools/Settings'))
 
@@ -80,7 +81,8 @@ export default function App() {
           {activeTool === 'afk' && <AntiAfk />}
           {activeTool === 'clicker' && <AutoClicker />}
           {activeTool === 'autokey' && <AutoKey />}
-          {activeTool === 'game' && <GameSettings />}
+          {activeTool === 'game'       && <GameSettings />}
+          {activeTool === 'screenshot' && <IracingScreenshot />}
         </Suspense>
       </main>
       {patchNotesOpen && (
