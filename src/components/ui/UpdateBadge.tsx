@@ -1,3 +1,4 @@
+import { ArrowRight, Circle } from 'lucide-react'
 import { useToolStore } from '@/store/toolStore'
 
 export default function UpdateBadge() {
@@ -7,22 +8,25 @@ export default function UpdateBadge() {
   return (
     <div className="bg-amber/10 border-b border-amber/20 px-5 py-2.5 flex items-center justify-between gap-4">
       <span className={[
-        'text-xs font-mono text-amber/80',
+        'inline-flex items-center gap-1.5 text-xs font-mono text-amber/80',
         !updateDownloading && !updateReady ? 'animate-pulse' : '',
       ].join(' ')}>
+        {(updateReady || updateDownloading) && (
+          <Circle size={7} fill="currentColor" strokeWidth={0} />
+        )}
         {updateReady
-          ? '● Update downloaded'
+          ? 'Update downloaded'
           : updateDownloading
-            ? '● Downloading…'
+            ? 'Downloading…'
             : 'New update available'}
       </span>
 
       {updateReady ? (
         <button
           onClick={() => window.api.updateInstall()}
-          className="text-xs font-mono font-semibold text-amber hover:text-amber/70 transition-colors shrink-0"
+          className="inline-flex items-center gap-1 text-xs font-mono font-semibold text-amber hover:text-amber/70 transition-colors shrink-0"
         >
-          Restart now →
+          Restart now <ArrowRight size={12} />
         </button>
       ) : !updateDownloading ? (
         <button

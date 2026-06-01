@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { AppWindow, ChevronDown, ChevronUp, X } from 'lucide-react'
 
 interface Props {
   value: string
@@ -90,7 +91,9 @@ export default function WindowPicker({ value, onChange }: Props) {
               {w.icon ? (
                 <img src={`data:image/png;base64,${w.icon}`} className="w-4 h-4 shrink-0 object-contain" alt="" />
               ) : (
-                <span className="w-4 h-4 shrink-0 rounded bg-surface/20 flex items-center justify-center text-muted/30 text-xs">□</span>
+                <span className="w-4 h-4 shrink-0 rounded bg-surface/20 flex items-center justify-center text-muted/30">
+                  <AppWindow size={10} />
+                </span>
               )}
               <span className="text-xs font-mono truncate">{w.title}</span>
             </button>
@@ -117,15 +120,17 @@ export default function WindowPicker({ value, onChange }: Props) {
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 min-w-0 bg-transparent text-xs font-mono text-muted/70 placeholder:text-muted/30 focus:outline-none"
           />
-          <span className="text-muted/25 text-xs shrink-0">{open ? '▴' : '▾'}</span>
+          <span className="text-muted/25 shrink-0">
+            {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          </span>
         </div>
 
         {value && (
           <button
             onClick={() => { onChange(''); close() }}
-            className="w-9 h-9 shrink-0 rounded-md bg-surface/10 border border-surface/15 text-muted/40 hover:text-warn hover:bg-warn/10 transition-colors text-sm"
+            className="w-9 h-9 shrink-0 rounded-md bg-surface/10 border border-surface/15 text-muted/40 hover:text-warn hover:bg-warn/10 transition-colors flex items-center justify-center"
           >
-            ×
+            <X size={14} />
           </button>
         )}
       </div>

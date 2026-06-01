@@ -27,5 +27,7 @@ interface Window {
     onUpdateAvailable:   (cb: () => void) => void
     onUpdateDownloading: (cb: () => void) => void
     onUpdateReady:       (cb: () => void) => void
+    getAutostart: () => Promise<boolean>
+    setAutostart: (enabled: boolean) => Promise<void>
   }
 }

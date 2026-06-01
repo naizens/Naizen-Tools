@@ -11,6 +11,7 @@ interface ToolConfig {
 
 interface ToolState {
   theme: 'dark' | 'light'
+  autostart: boolean | null
   running: Record<keyof ToolConfig, boolean>
   config: ToolConfig
   afkPresses: number
@@ -19,6 +20,7 @@ interface ToolState {
   updateDownloading: boolean
   updateReady: boolean
   setTheme: (t: 'dark' | 'light') => void
+  setAutostart: (v: boolean) => void
   setConfig: <K extends keyof ToolConfig>(tool: K, cfg: Partial<ToolConfig[K]>) => void
   setRunning: (tool: keyof ToolConfig, running: boolean) => void
   setAfkTick: (remaining: number, presses: number) => void
@@ -31,6 +33,7 @@ export const useToolStore = create<ToolState>()(
   persist(
     (set) => ({
       theme: 'dark',
+      autostart: null,
       running: {
         afk: false,
         whold: false,
@@ -53,6 +56,7 @@ export const useToolStore = create<ToolState>()(
       updateReady: false,
 
       setTheme: (theme) => set({ theme }),
+      setAutostart: (autostart) => set({ autostart }),
 
       setConfig: (tool, cfg) =>
         set((s) => ({

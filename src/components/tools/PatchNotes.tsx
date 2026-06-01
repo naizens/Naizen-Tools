@@ -1,4 +1,5 @@
 import { memo, useEffect } from 'react'
+import { ChevronRight, X } from 'lucide-react'
 
 interface Props {
   onClose: () => void
@@ -11,6 +12,34 @@ interface Entry {
 }
 
 const ENTRIES: Entry[] = [
+  {
+    version: '0.4.0',
+    date: 'June 1, 2026',
+    sections: [
+      {
+        label: 'New',
+        color: 'text-success',
+        items: [
+          'Settings — gear icon in the title bar opens a settings modal',
+          'Autostart — launch the app automatically when Windows starts',
+        ],
+      },
+      {
+        label: 'Improved',
+        color: 'text-accent',
+        items: [
+          'Icons — all icons are now Lucide for a consistent look',
+        ],
+      },
+      {
+        label: 'Fixed',
+        color: 'text-warn',
+        items: [
+          'Tray Icon — no longer crashes when the app is minimized',
+        ],
+      },
+    ],
+  },
   {
     version: '0.3.1',
     date: 'May 31, 2026',
@@ -118,9 +147,9 @@ export default memo(function PatchNotes({ onClose }: Props) {
           </span>
           <button
             onClick={onClose}
-            className="w-6 h-6 rounded-md flex items-center justify-center text-muted/30 hover:text-muted/70 hover:bg-surface/10 transition-colors text-sm"
+            className="w-6 h-6 rounded-md flex items-center justify-center text-muted/30 hover:text-muted/70 hover:bg-surface/10 transition-colors"
           >
-            ×
+            <X size={14} />
           </button>
         </div>
 
@@ -146,8 +175,8 @@ export default memo(function PatchNotes({ onClose }: Props) {
                     {section.items.map((item) => {
                       const [title, ...rest] = item.split(' — ')
                       return (
-                        <li key={item} className="flex items-start gap-2.5 text-xs font-mono">
-                          <span className="mt-px text-muted/20 shrink-0">▸</span>
+                        <li key={item} className="flex items-start gap-1.5 text-xs font-mono">
+                          <ChevronRight size={12} className="mt-px text-muted/20 shrink-0" />
                           <span className="text-muted/60 leading-relaxed">
                             {rest.length > 0 ? (
                               <>

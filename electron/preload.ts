@@ -30,4 +30,6 @@ contextBridge.exposeInMainWorld('api', {
   onUpdateAvailable:    (cb: () => void) => { ipcRenderer.on('update:available',   cb) },
   onUpdateDownloading:  (cb: () => void) => { ipcRenderer.on('update:downloading', cb) },
   onUpdateReady:        (cb: () => void) => { ipcRenderer.on('update:ready',        cb) },
+  getAutostart: () => ipcRenderer.invoke('autostart:get') as Promise<boolean>,
+  setAutostart: (enabled: boolean) => ipcRenderer.invoke('autostart:set', { enabled }),
 })
