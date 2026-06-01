@@ -39,6 +39,10 @@ export default function App() {
   }, [setAutostart])
 
   useEffect(() => {
+    window.api.setCloseAction(useToolStore.getState().closeAction)
+  }, [])
+
+  useEffect(() => {
     window.api.onToolStatus(({ tool, running }) => {
       setRunning(tool as Parameters<typeof setRunning>[0], running)
     })
@@ -64,7 +68,7 @@ export default function App() {
         window.api.startTool(tool, cfg as unknown as Record<string, unknown>)
       }
     })
-  }, [setRunning, setAfkTick, setUpdateAvailable, setUpdateDownloading, setUpdateReady])
+  }, [setRunning, setAfkTick])
 
   return (
     <div className="flex flex-col h-screen bg-app text-muted/80 select-none">

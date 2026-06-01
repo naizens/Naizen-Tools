@@ -21,7 +21,7 @@ export default memo(function WHold() {
         <StatusBadge running={running} />
       </div>
       <Button variant={running ? 'danger' : 'primary'} onClick={toggle}>
-        {running ? 'Stoppen' : 'Starten'}
+        {running ? 'Stop' : 'Start'}
       </Button>
     </Panel>
   )

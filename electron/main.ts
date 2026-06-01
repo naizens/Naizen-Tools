@@ -4,6 +4,7 @@ import { autoUpdater } from 'electron-updater'
 
 let win: BrowserWindow | null = null
 let tray: Tray | null = null
+let closeAction: 'minimize' | 'quit' = 'minimize'
 
 // ─── Automation-State ────────────────────────────────────────────────────────
 const stopFlags: Record<string, boolean> = {
@@ -371,8 +372,9 @@ function setupIpc() {
 
   ipcMain.on('window:minimize', () => win?.minimize())
   ipcMain.on('window:maximize', () => (win?.isMaximized() ? win.unmaximize() : win?.maximize()))
-  ipcMain.on('window:close', () => win?.hide())
+  ipcMain.on('window:close', () => closeAction === 'quit' ? app.exit() : win?.hide())
   ipcMain.on('update:install', () => autoUpdater.quitAndInstall())
+  ipcMain.on('close-action:set', (_, action: 'minimize' | 'quit') => { closeAction = action })
 
   ipcMain.handle('autostart:get', () => app.getLoginItemSettings().openAtLogin)
   ipcMain.handle('autostart:set', (_, { enabled }: { enabled: boolean }) => {
@@ -412,6 +414,7 @@ function createWindow() {
   }
 
   win.on('close', (e) => {
+    if (closeAction === 'quit') return
     e.preventDefault()
     win?.hide()
   })
@@ -431,10 +434,10 @@ function createTray() {
   tray.setToolTip('Naizen-Tools')
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: 'Öffnen', click: () => win?.show() },
+      { label: 'Open', click: () => win?.show() },
       { type: 'separator' },
       {
-        label: 'Beenden',
+        label: 'Quit',
         click: () => {
           Object.keys(stopFlags).forEach((k) => (stopFlags[k] = true))
           app.exit()

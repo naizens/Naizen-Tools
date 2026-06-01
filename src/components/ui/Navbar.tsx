@@ -4,9 +4,9 @@ export type Tool = 'afk' | 'clicker' | 'autokey' | 'game'
 
 const TABS: { id: Tool; label: string }[] = [
   { id: 'afk',     label: 'Anti-AFK' },
-  { id: 'clicker', label: 'Klicker' },
-  { id: 'autokey', label: 'Taste' },
-  { id: 'game',    label: 'Spiel' },
+  { id: 'clicker', label: 'Clicker' },
+  { id: 'autokey', label: 'Auto Key' },
+  { id: 'game',    label: 'Game' },
 ]
 
 interface Props {

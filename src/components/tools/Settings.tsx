@@ -9,8 +9,10 @@ interface Props {
 export default memo(function Settings({ onClose }: Props) {
   const theme    = useToolStore((s) => s.theme)
   const setTheme = useToolStore((s) => s.setTheme)
-  const autostart    = useToolStore((s) => s.autostart)
-  const setAutostart = useToolStore((s) => s.setAutostart)
+  const autostart      = useToolStore((s) => s.autostart)
+  const setAutostart   = useToolStore((s) => s.setAutostart)
+  const closeAction    = useToolStore((s) => s.closeAction)
+  const setCloseAction = useToolStore((s) => s.setCloseAction)
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -19,6 +21,12 @@ export default memo(function Settings({ onClose }: Props) {
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
+
+  function toggleCloseAction() {
+    const next = closeAction === 'minimize' ? 'quit' : 'minimize'
+    setCloseAction(next)
+    window.api.setCloseAction(next)
+  }
 
   function toggleAutostart() {
     if (autostart === null) return
@@ -39,7 +47,7 @@ export default memo(function Settings({ onClose }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-surface/10">
           <span className="text-xs font-mono font-semibold tracking-widest uppercase text-muted/40">
-            Einstellungen
+            Settings
           </span>
           <button
             onClick={onClose}
@@ -55,7 +63,7 @@ export default memo(function Settings({ onClose }: Props) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-mono font-semibold text-muted/70">Autostart</p>
-              <p className="text-xs font-mono text-muted/30 mt-0.5">App beim Windows-Start öffnen</p>
+              <p className="text-xs font-mono text-muted/30 mt-0.5">Launch on Windows startup</p>
             </div>
             <button
               onClick={toggleAutostart}
@@ -64,7 +72,7 @@ export default memo(function Settings({ onClose }: Props) {
                 'relative w-11 h-6 rounded-full transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
                 autostart ? 'bg-accent/30' : 'bg-muted/20',
               ].join(' ')}
-              title="Autostart umschalten"
+              title="Toggle autostart"
             >
               <span
                 className={[
@@ -75,11 +83,36 @@ export default memo(function Settings({ onClose }: Props) {
             </button>
           </div>
 
+          {/* Close action */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-mono font-semibold text-muted/70">Close button</p>
+              <p className="text-xs font-mono text-muted/30 mt-0.5">
+                {closeAction === 'minimize' ? 'Minimizes to tray' : 'Quits the app'}
+              </p>
+            </div>
+            <button
+              onClick={toggleCloseAction}
+              className={[
+                'relative w-11 h-6 rounded-full transition-colors',
+                closeAction === 'minimize' ? 'bg-accent/30' : 'bg-muted/20',
+              ].join(' ')}
+              title="Toggle close behavior"
+            >
+              <span
+                className={[
+                  'absolute top-1 w-4 h-4 rounded-full transition-all',
+                  closeAction === 'minimize' ? 'left-6 bg-accent' : 'left-1 bg-muted/50',
+                ].join(' ')}
+              />
+            </button>
+          </div>
+
           {/* Theme */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-mono font-semibold text-muted/70">Design</p>
-              <p className="text-xs font-mono text-muted/30 mt-0.5">Helles oder dunkles Erscheinungsbild</p>
+              <p className="text-xs font-mono font-semibold text-muted/70">Theme</p>
+              <p className="text-xs font-mono text-muted/30 mt-0.5">Light or dark appearance</p>
             </div>
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -87,7 +120,7 @@ export default memo(function Settings({ onClose }: Props) {
                 'relative w-11 h-6 rounded-full transition-colors',
                 theme === 'dark' ? 'bg-accent/30' : 'bg-muted/20',
               ].join(' ')}
-              title="Theme wechseln"
+              title="Toggle theme"
             >
               <span
                 className={[
