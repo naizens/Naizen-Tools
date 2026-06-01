@@ -8,6 +8,11 @@ contextBridge.exposeInMainWorld('api', {
   windowMinimize: () => ipcRenderer.send('window:minimize'),
   windowMaximize: () => ipcRenderer.send('window:maximize'),
   windowClose: () => ipcRenderer.send('window:close'),
+  onUpdateDownloaded: (cb: () => void) => {
+    const handler = () => cb()
+    ipcRenderer.on('update:downloaded', handler)
+    return () => ipcRenderer.off('update:downloaded', handler)
+  },
   updateInstall: () => ipcRenderer.send('update:install'),
   windowsList: () => ipcRenderer.invoke('windows:list'),
   setGameFps: (fg: number, bg: number) => ipcRenderer.invoke('game:setFps', { fg, bg }),
@@ -26,8 +31,6 @@ contextBridge.exposeInMainWorld('api', {
   onHotkeyTrigger: (cb: (data: { tool: string }) => void) => {
     ipcRenderer.on('hotkey:trigger', (_, data) => cb(data as { tool: string }))
   },
-  onUpdateAvailable: (cb: () => void) => { ipcRenderer.on('update:available', cb) },
-  onUpdateReady:     (cb: () => void) => { ipcRenderer.on('update:ready',     cb) },
   getAutostart: () => ipcRenderer.invoke('autostart:get') as Promise<boolean>,
   setAutostart: (enabled: boolean) => ipcRenderer.invoke('autostart:set', { enabled }),
 })

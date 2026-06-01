@@ -457,10 +457,9 @@ app.whenReady().then(() => {
   if (app.isPackaged) {
     autoUpdater.autoDownload = true
     autoUpdater.autoInstallOnAppQuit = false
-    autoUpdater.on('update-available',  () => win?.webContents.send('update:available'))
-    autoUpdater.on('update-downloaded', () => win?.webContents.send('update:ready'))
+    autoUpdater.on('update-downloaded', () => win?.webContents.send('update:downloaded'))
     autoUpdater.on('error', (e) => console.error('[updater]', e.message))
-    win?.webContents.once('did-finish-load', () => autoUpdater.checkForUpdates())
+    autoUpdater.checkForUpdates()
   }
 })
 
