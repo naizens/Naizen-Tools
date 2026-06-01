@@ -460,7 +460,7 @@ app.whenReady().then(() => {
     autoUpdater.on('update-available',  () => win?.webContents.send('update:available'))
     autoUpdater.on('update-downloaded', () => win?.webContents.send('update:ready'))
     autoUpdater.on('error', (e) => console.error('[updater]', e.message))
-    autoUpdater.checkForUpdates()
+    win?.webContents.once('did-finish-load', () => autoUpdater.checkForUpdates())
   }
 })
 

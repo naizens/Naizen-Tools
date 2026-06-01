@@ -13,6 +13,19 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   {
+    version: '0.4.2',
+    date: 'June 1, 2026',
+    sections: [
+      {
+        label: 'Fixed',
+        color: 'text-warn',
+        items: [
+          'Auto Update — check now waits for the window to finish loading, so update notifications are never missed',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.4.1',
     date: 'June 1, 2026',
     sections: [
