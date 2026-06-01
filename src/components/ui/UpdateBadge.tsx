@@ -15,7 +15,7 @@ export default function UpdateBadge() {
       <span className="text-xs font-mono text-amber/80">Update downloaded</span>
       <button
         onClick={() => window.api.updateInstall()}
-        className="inline-flex items-center gap-1 text-xs font-mono font-semibold text-amber hover:text-amber/70 transition-colors shrink-0"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber/20 border border-amber/30 text-xs font-mono font-semibold text-amber hover:bg-amber/30 transition-colors shrink-0"
       >
         Restart now <ArrowRight size={12} />
       </button>
