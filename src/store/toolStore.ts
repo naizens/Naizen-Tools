@@ -11,12 +11,14 @@ interface ToolConfig {
 
 interface ToolState {
   theme: 'dark' | 'light'
+  closeAction: 'minimize' | 'quit'
   autostart: boolean | null
   running: Record<keyof ToolConfig, boolean>
   config: ToolConfig
   afkPresses: number
   afkRemaining: number
   setTheme: (t: 'dark' | 'light') => void
+  setCloseAction: (v: 'minimize' | 'quit') => void
   setAutostart: (v: boolean) => void
   setConfig: <K extends keyof ToolConfig>(tool: K, cfg: Partial<ToolConfig[K]>) => void
   setRunning: (tool: keyof ToolConfig, running: boolean) => void
@@ -27,6 +29,7 @@ export const useToolStore = create<ToolState>()(
   persist(
     (set) => ({
       theme: 'dark',
+      closeAction: 'minimize',
       autostart: null,
       running: {
         afk: false,
@@ -47,6 +50,7 @@ export const useToolStore = create<ToolState>()(
       afkRemaining: 0,
 
       setTheme: (theme) => set({ theme }),
+      setCloseAction: (closeAction) => set({ closeAction }),
       setAutostart: (autostart) => set({ autostart }),
 
       setConfig: (tool, cfg) =>
@@ -73,7 +77,7 @@ export const useToolStore = create<ToolState>()(
     }),
     {
       name: 'naizen-tools-store',
-      version: 4,
+      version: 5,
       migrate: (stored: unknown) => {
         const s = stored as {
           theme?: string
@@ -97,6 +101,7 @@ export const useToolStore = create<ToolState>()(
       },
       partialize: (s) => ({
         theme: s.theme,
+        closeAction: s.closeAction,
         config: s.config,
       }),
     },

@@ -35,21 +35,21 @@ export default function TitleBar({ onPatchNotes, onSettings }: Props) {
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           className="w-7 h-7 rounded-md flex items-center justify-center text-muted/40 hover:text-muted/80 hover:bg-surface/10 transition-colors"
-          title="Theme wechseln"
+          title="Toggle theme"
         >
           {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
         </button>
         <button
           onClick={() => window.api.windowMinimize()}
           className="w-7 h-7 rounded-md flex items-center justify-center text-muted/40 hover:text-muted/80 hover:bg-surface/10 transition-colors"
-          title="Minimieren"
+          title="Minimize"
         >
           <Minus size={14} />
         </button>
         <button
           onClick={() => window.api.windowMaximize()}
           className="w-7 h-7 rounded-md flex items-center justify-center text-muted/40 hover:text-muted/80 hover:bg-surface/10 transition-colors"
-          title="Maximieren"
+          title="Maximize"
         >
           <Square size={12} />
         </button>

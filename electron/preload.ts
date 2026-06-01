@@ -33,4 +33,5 @@ contextBridge.exposeInMainWorld('api', {
   },
   getAutostart: () => ipcRenderer.invoke('autostart:get') as Promise<boolean>,
   setAutostart: (enabled: boolean) => ipcRenderer.invoke('autostart:set', { enabled }),
+  setCloseAction: (action: 'minimize' | 'quit') => ipcRenderer.send('close-action:set', action),
 })

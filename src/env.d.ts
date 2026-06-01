@@ -26,5 +26,6 @@ interface Window {
     onHotkeyTrigger: (cb: (data: { tool: string }) => void) => void
     getAutostart: () => Promise<boolean>
     setAutostart: (enabled: boolean) => Promise<void>
+    setCloseAction: (action: 'minimize' | 'quit') => void
   }
 }

@@ -13,7 +13,7 @@ export default function StatusBadge({ running }: Props) {
       ].join(' ')}
     >
       <Circle size={7} fill="currentColor" strokeWidth={0} />
-      {running ? 'aktiv' : 'gestoppt'}
+      {running ? 'active' : 'stopped'}
     </span>
   )
 }

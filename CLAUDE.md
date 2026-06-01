@@ -1,5 +1,8 @@
 # Naizen-Tools — CLAUDE.md
 
+## Language
+- **All UI text must be in English** — labels, tooltips, status text, button text, modal content, tray menu items, everything visible to the user
+
 ## Stack
 - Electron v33 + electron-vite + React + TypeScript + Tailwind CSS v3
 - State: Zustand + persist (nur `config` + `theme` persistieren)

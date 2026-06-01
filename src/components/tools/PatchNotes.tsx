@@ -13,6 +13,20 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   {
+    version: '0.4.5',
+    date: 'June 1, 2026',
+    sections: [
+      {
+        label: 'Improved',
+        color: 'text-accent',
+        items: [
+          'Close button — new setting to choose between minimizing to tray or quitting the app',
+          'Language — all UI text is now in English',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.4.4',
     date: 'June 1, 2026',
     sections: [
