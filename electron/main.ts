@@ -1,17 +1,36 @@
-import { app, BrowserWindow, ipcMain, Menu, screen, Tray, shell, globalShortcut } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, screen, Tray, shell, globalShortcut } from 'electron'
 import { join } from 'path'
 import { readFileSync, writeFileSync } from 'fs'
 import { autoUpdater } from 'electron-updater'
+import { IracingBridge } from './iracing'
+import {
+  getIracingWindow,
+  resizeWindow,
+  restoreWindow,
+  getDesktopSource,
+  processImage,
+  makeThumbnail,
+  resolveFilename,
+  getCaptureDimensions,
+  EXT,
+  type ScreenshotConfig,
+} from './screenshot'
 
 let win: BrowserWindow | null = null
 let tray: Tray | null = null
 let closeAction: 'minimize' | 'quit' = 'minimize'
 
+// ─── iRacing + Screenshot state ───────────────────────────────────────────────
+
+const iracing = new IracingBridge()
+let takingScreenshot = false
+let pendingCapture: { resolve: (buf: Buffer) => void; reject: (e: Error) => void } | null = null
+
 // ─── Window State ─────────────────────────────────────────────────────────────
 
 interface WinState { width: number; height: number; x: number; y: number; maximized: boolean }
 
-const DEFAULT_WIN: WinState = { width: 420, height: 700, x: -1, y: -1, maximized: false }
+const DEFAULT_WIN: WinState = { width: 1280, height: 720, x: -1, y: -1, maximized: false }
 
 function winStatePath() {
   return join(app.getPath('userData'), 'window-state.json')
@@ -413,6 +432,86 @@ function setupIpc() {
   ipcMain.handle('autostart:set', (_, { enabled }: { enabled: boolean }) => {
     app.setLoginItemSettings({ openAtLogin: enabled })
   })
+
+  // ── iRacing ──────────────────────────────────────────────────────────────
+  ipcMain.handle('iracing:status', () => iracing.connected)
+  ipcMain.handle('iracing:sessionInfo', () => iracing.sessionInfo)
+
+  // ── Screenshot ────────────────────────────────────────────────────────────
+  ipcMain.handle('screenshot:take', async (_, config: ScreenshotConfig) => {
+    if (!iracing.connected) throw new Error('iRacing not connected')
+    if (takingScreenshot) throw new Error('Already taking screenshot')
+    takingScreenshot = true
+
+    const originalBounds = getIracingWindow()
+    if (!originalBounds) { takingScreenshot = false; throw new Error('iRacing window not found') }
+
+    const { targetWidth, targetHeight, captureWidth, captureHeight } = getCaptureDimensions(config)
+    const cameraState = iracing.hideUI()
+
+    try {
+      await iracing.waitForUIHidden(500)
+      resizeWindow(originalBounds, captureWidth, captureHeight)
+      await new Promise((r) => setTimeout(r, 300))
+
+      const sourceId = await getDesktopSource(originalBounds)
+
+      // Ask renderer to capture
+      win?.webContents.send('screenshot:capture', {
+        sourceId,
+        width: captureWidth,
+        height: captureHeight,
+      })
+
+      // Wait for renderer to send back the image buffer
+      const buffer = await new Promise<Buffer>((resolve, reject) => {
+        pendingCapture = { resolve, reject }
+        setTimeout(() => {
+          pendingCapture = null
+          reject(new Error('Capture timeout'))
+        }, 15000)
+      })
+
+      const ext = EXT[config.outputFormat] ?? '.jpg'
+      const outPath = resolveFilename(
+        config.filenameFormat,
+        iracing.sessionInfo,
+        iracing.telemetry.Lap,
+        iracing.telemetry.SessionNum,
+        config.folder,
+        ext,
+      )
+
+      await processImage(buffer, targetWidth, targetHeight, config.crop, false, outPath)
+      const thumb = await makeThumbnail(outPath).catch(() => null)
+
+      return { path: outPath, thumb }
+    } finally {
+      iracing.restoreUI(cameraState)
+      if (originalBounds) restoreWindow(originalBounds)
+      takingScreenshot = false
+    }
+  })
+
+  ipcMain.on('screenshot:buffer', (_, buf: Buffer) => {
+    if (pendingCapture) {
+      pendingCapture.resolve(buf)
+      pendingCapture = null
+    }
+  })
+
+  ipcMain.handle('screenshot:pickFolder', async () => {
+    const result = await dialog.showOpenDialog(win!, {
+      properties: ['openDirectory'],
+      title: 'Select Screenshot Folder',
+    })
+    return result.canceled ? null : result.filePaths[0]
+  })
+
+  ipcMain.handle('screenshot:defaultFolder', () => {
+    const { homedir } = require('os') as typeof import('os')
+    return join(homedir(), 'Pictures', 'Screenshots')
+  })
 }
 
 // ─── Fenster ─────────────────────────────────────────────────────────────────
@@ -497,6 +596,11 @@ app.whenReady().then(() => {
   createWindow()
   createTray()
 
+  // iRacing SDK bridge
+  iracing.on('connected',    () => win?.webContents.send('iracing:connected'))
+  iracing.on('disconnected', () => win?.webContents.send('iracing:disconnected'))
+  iracing.start().catch((e) => console.error('[iracing]', e))
+
   if (app.isPackaged) {
     autoUpdater.autoDownload = true
     autoUpdater.autoInstallOnAppQuit = false
@@ -507,5 +611,5 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => { /* tray handles quit */ })
-app.on('will-quit', () => globalShortcut.unregisterAll())
+app.on('will-quit', () => { globalShortcut.unregisterAll(); iracing.stop() })
 app.on('activate', () => win?.show())

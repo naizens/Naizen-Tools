@@ -9,10 +9,25 @@ interface ToolConfig {
   game: { windowTitle: string; fgFps: number; bgFps: number; hotkey: string | null }
 }
 
+export interface ScreenshotConfig {
+  resolution: '1080p' | '2k' | '4k' | '5k' | '6k' | '7k' | '8k' | 'custom'
+  customWidth: number
+  customHeight: number
+  crop: boolean
+  keepAspectRatio: boolean
+  outputFormat: 'jpeg' | 'png' | 'webp'
+  folder: string
+  filenameFormat: string
+  hotkey: string
+  screenWidth: number
+  screenHeight: number
+}
+
 interface ToolState {
   theme: 'dark' | 'light'
   closeAction: 'minimize' | 'quit'
   autostart: boolean | null
+  screenshot: ScreenshotConfig
   running: Record<keyof ToolConfig, boolean>
   config: ToolConfig
   afkPresses: number
@@ -20,6 +35,7 @@ interface ToolState {
   setTheme: (t: 'dark' | 'light') => void
   setCloseAction: (v: 'minimize' | 'quit') => void
   setAutostart: (v: boolean) => void
+  setScreenshot: (cfg: Partial<ScreenshotConfig>) => void
   setConfig: <K extends keyof ToolConfig>(tool: K, cfg: Partial<ToolConfig[K]>) => void
   setRunning: (tool: keyof ToolConfig, running: boolean) => void
   setAfkTick: (remaining: number, presses: number) => void
@@ -31,6 +47,19 @@ export const useToolStore = create<ToolState>()(
       theme: 'dark',
       closeAction: 'minimize',
       autostart: null,
+      screenshot: {
+        resolution: '1080p',
+        customWidth: 1920,
+        customHeight: 1080,
+        crop: true,
+        keepAspectRatio: false,
+        outputFormat: 'jpeg',
+        folder: '',
+        filenameFormat: '{track}-{driver}-{counter}',
+        hotkey: 'Control+PrintScreen',
+        screenWidth: 0,
+        screenHeight: 0,
+      },
       running: {
         afk: false,
         whold: false,
@@ -52,6 +81,7 @@ export const useToolStore = create<ToolState>()(
       setTheme: (theme) => set({ theme }),
       setCloseAction: (closeAction) => set({ closeAction }),
       setAutostart: (autostart) => set({ autostart }),
+      setScreenshot: (cfg) => set((s) => ({ screenshot: { ...s.screenshot, ...cfg } })),
 
       setConfig: (tool, cfg) =>
         set((s) => ({
@@ -77,7 +107,7 @@ export const useToolStore = create<ToolState>()(
     }),
     {
       name: 'naizen-tools-store',
-      version: 5,
+      version: 6,
       migrate: (stored: unknown) => {
         const s = stored as {
           theme?: string
@@ -102,6 +132,7 @@ export const useToolStore = create<ToolState>()(
       partialize: (s) => ({
         theme: s.theme,
         closeAction: s.closeAction,
+        screenshot: s.screenshot,
         config: s.config,
       }),
     },

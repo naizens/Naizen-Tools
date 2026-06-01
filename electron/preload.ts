@@ -34,4 +34,27 @@ contextBridge.exposeInMainWorld('api', {
   getAutostart: () => ipcRenderer.invoke('autostart:get') as Promise<boolean>,
   setAutostart: (enabled: boolean) => ipcRenderer.invoke('autostart:set', { enabled }),
   setCloseAction: (action: 'minimize' | 'quit') => ipcRenderer.send('close-action:set', action),
+
+  // iRacing
+  iracingStatus: () => ipcRenderer.invoke('iracing:status') as Promise<boolean>,
+  iracingSessionInfo: () => ipcRenderer.invoke('iracing:sessionInfo') as Promise<unknown>,
+  onIracingConnected: (cb: () => void) => {
+    ipcRenderer.on('iracing:connected', cb)
+    return () => ipcRenderer.off('iracing:connected', cb)
+  },
+  onIracingDisconnected: (cb: () => void) => {
+    ipcRenderer.on('iracing:disconnected', cb)
+    return () => ipcRenderer.off('iracing:disconnected', cb)
+  },
+
+  // Screenshot
+  takeScreenshot: (config: unknown) => ipcRenderer.invoke('screenshot:take', config) as Promise<{ path: string; thumb: string | null }>,
+  submitScreenshotBuffer: (buf: Buffer) => ipcRenderer.send('screenshot:buffer', buf),
+  onScreenshotCapture: (cb: (data: { sourceId: string | null; width: number; height: number }) => void) => {
+    const handler = (_: Electron.IpcRendererEvent, data: unknown) => cb(data as { sourceId: string | null; width: number; height: number })
+    ipcRenderer.on('screenshot:capture', handler)
+    return () => ipcRenderer.off('screenshot:capture', handler)
+  },
+  pickScreenshotFolder: () => ipcRenderer.invoke('screenshot:pickFolder') as Promise<string | null>,
+  defaultScreenshotFolder: () => ipcRenderer.invoke('screenshot:defaultFolder') as Promise<string>,
 })

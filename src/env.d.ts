@@ -27,5 +27,14 @@ interface Window {
     getAutostart: () => Promise<boolean>
     setAutostart: (enabled: boolean) => Promise<void>
     setCloseAction: (action: 'minimize' | 'quit') => void
+    iracingStatus: () => Promise<boolean>
+    iracingSessionInfo: () => Promise<unknown>
+    onIracingConnected: (cb: () => void) => () => void
+    onIracingDisconnected: (cb: () => void) => () => void
+    takeScreenshot: (config: unknown) => Promise<{ path: string; thumb: string | null }>
+    submitScreenshotBuffer: (buf: Buffer) => void
+    onScreenshotCapture: (cb: (data: { sourceId: string | null; width: number; height: number }) => void) => () => void
+    pickScreenshotFolder: () => Promise<string | null>
+    defaultScreenshotFolder: () => Promise<string>
   }
 }

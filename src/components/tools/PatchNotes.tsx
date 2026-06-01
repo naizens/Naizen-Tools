@@ -13,6 +13,22 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   {
+    version: '0.5.0',
+    date: 'June 2, 2026',
+    sections: [
+      {
+        label: 'New',
+        color: 'text-success',
+        items: [
+          'iRacing Screenshot — take high-res screenshots (up to 8K) with automatic watermark crop',
+          'iRacing tab — Macros and iRacing tools now have their own nav dropdowns',
+          'Filename tokens — customizable filename with track, driver, car, lap, date and more',
+          'Output format — choose between JPEG, PNG, or WebP',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.4.7',
     date: 'June 1, 2026',
     sections: [
