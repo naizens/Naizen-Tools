@@ -70,6 +70,7 @@ contextBridge.exposeInMainWorld('api', {
   appsLaunchAll: (apps: unknown[]) => ipcRenderer.send('apps:launchAll', apps),
   appsRunning: () => ipcRenderer.invoke('apps:running') as Promise<string[]>,
   appsPickExe: () => ipcRenderer.invoke('apps:pickExe') as Promise<string | null>,
+  appsGetIcon: (exePath: string) => ipcRenderer.invoke('apps:getIcon', exePath) as Promise<string | null>,
   onAppsStatus: (cb: (data: { id: string; running: boolean }) => void) => {
     const handler = (_: Electron.IpcRendererEvent, data: unknown) => cb(data as { id: string; running: boolean })
     ipcRenderer.on('apps:status', handler)

@@ -46,6 +46,7 @@ interface Window {
     appsLaunchAll: (apps: unknown[]) => void
     appsRunning: () => Promise<string[]>
     appsPickExe: () => Promise<string | null>
+    appsGetIcon: (exePath: string) => Promise<string | null>
     onAppsStatus: (cb: (data: { id: string; running: boolean }) => void) => () => void
     onAppsGetList: (cb: () => void) => () => void
     pickScreenshotFolder: () => Promise<string | null>

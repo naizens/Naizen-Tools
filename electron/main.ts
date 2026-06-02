@@ -568,6 +568,15 @@ function setupIpc() {
   })
 
   // ── App Launcher ──────────────────────────────────────────────────────────
+  ipcMain.handle('apps:getIcon', async (_, exePath: string) => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const extractFileIcon = require('extract-file-icon')
+      const buf: Buffer = extractFileIcon(exePath, 32)
+      return buf && buf.length > 0 ? buf.toString('base64') : null
+    } catch { return null }
+  })
+
   ipcMain.on('apps:launch', (_, app_: AppEntry) => launchApp(app_))
   ipcMain.on('apps:kill',   (_, id: string)     => killApp(id))
   ipcMain.on('apps:launchAll', (_, apps: AppEntry[]) => {
