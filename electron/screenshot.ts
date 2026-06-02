@@ -1,6 +1,6 @@
 import { app, desktopCapturer, screen } from 'electron'
 import { spawnSync } from 'child_process'
-import { existsSync, mkdirSync } from 'fs'
+import { appendFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs'
 import { join, extname } from 'path'
 import sharp from 'sharp'
 import type { IracingSessionInfo } from './iracing'
@@ -24,12 +24,15 @@ export interface ScreenshotConfig {
   customWidth: number
   customHeight: number
   crop: boolean
+  cropTopLeft: boolean
   keepAspectRatio: boolean
   outputFormat: 'jpeg' | 'png' | 'webp'
   folder: string
   filenameFormat: string
+  hotkey: string
   screenWidth: number
   screenHeight: number
+  manualRestore: boolean
 }
 
 export interface WindowBounds {
@@ -260,4 +263,66 @@ export const EXT: Record<string, string> = {
   jpeg: '.jpg',
   png:  '.png',
   webp: '.webp',
+}
+
+// ─── Error logging ────────────────────────────────────────────────────────────
+
+export function logScreenshotError(err: unknown, config: unknown) {
+  try {
+    const logDir = app.getPath('userData')
+    const logPath = join(logDir, 'screenshot-errors.log')
+    const line = [
+      new Date().toISOString(),
+      err instanceof Error ? err.message : String(err),
+      JSON.stringify(config),
+    ].join(' | ') + '\n'
+    appendFileSync(logPath, line)
+  } catch { /* ignore logging errors */ }
+}
+
+// ─── Gallery listing ──────────────────────────────────────────────────────────
+
+export interface ScreenshotEntry {
+  path: string
+  name: string
+  thumb: string | null
+  mtime: number
+}
+
+const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.bmp'])
+
+export async function listScreenshots(folder: string): Promise<ScreenshotEntry[]> {
+  if (!existsSync(folder)) return []
+
+  const cacheDir = join(app.getPath('userData'), 'ScreenshotCache')
+  if (!existsSync(cacheDir)) mkdirSync(cacheDir, { recursive: true })
+
+  const files = readdirSync(folder)
+    .filter((f) => IMAGE_EXTS.has(extname(f).toLowerCase()))
+    .map((f) => {
+      const fullPath = join(folder, f)
+      const stat = statSync(fullPath)
+      return { path: fullPath, name: f, mtime: stat.mtimeMs }
+    })
+    .sort((a, b) => b.mtime - a.mtime)
+
+  const results: ScreenshotEntry[] = []
+  for (const file of files) {
+    const thumbName = file.name.replace(extname(file.name), '.webp')
+    const thumbPath = join(cacheDir, thumbName)
+
+    let thumb: string | null = null
+    if (existsSync(thumbPath)) {
+      thumb = thumbPath
+    } else {
+      try {
+        await makeThumbnail(file.path)
+        thumb = thumbPath
+      } catch { /* skip thumbnail on error */ }
+    }
+
+    results.push({ ...file, thumb })
+  }
+
+  return results
 }

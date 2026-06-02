@@ -12,6 +12,8 @@ import {
   makeThumbnail,
   resolveFilename,
   getCaptureDimensions,
+  logScreenshotError,
+  listScreenshots,
   EXT,
   type ScreenshotConfig,
 } from './screenshot'
@@ -25,6 +27,7 @@ let closeAction: 'minimize' | 'quit' = 'minimize'
 const iracing = new IracingBridge()
 let takingScreenshot = false
 let pendingCapture: { resolve: (buf: Buffer) => void; reject: (e: Error) => void } | null = null
+let screenshotHotkeyAccel = ''
 
 // ─── Window State ─────────────────────────────────────────────────────────────
 
@@ -482,13 +485,16 @@ function setupIpc() {
         ext,
       )
 
-      await processImage(buffer, targetWidth, targetHeight, config.crop, false, outPath)
+      await processImage(buffer, targetWidth, targetHeight, config.crop, config.cropTopLeft ?? false, outPath)
       const thumb = await makeThumbnail(outPath).catch(() => null)
 
       return { path: outPath, thumb }
+    } catch (e) {
+      logScreenshotError(e, config)
+      throw e
     } finally {
       iracing.restoreUI(cameraState)
-      if (originalBounds) restoreWindow(originalBounds)
+      if (originalBounds && !config.manualRestore) restoreWindow(originalBounds)
       takingScreenshot = false
     }
   })
@@ -511,6 +517,31 @@ function setupIpc() {
   ipcMain.handle('screenshot:defaultFolder', () => {
     const { homedir } = require('os') as typeof import('os')
     return join(homedir(), 'Pictures', 'Screenshots')
+  })
+
+  ipcMain.handle('screenshot:list', async (_, folder: string) => {
+    return listScreenshots(folder)
+  })
+
+  ipcMain.on('screenshot:open', (_, filePath: string) => {
+    shell.showItemInFolder(filePath)
+  })
+
+  ipcMain.on('screenshot:hotkey:set', (_, hotkey: string) => {
+    if (screenshotHotkeyAccel) {
+      try { globalShortcut.unregister(screenshotHotkeyAccel) } catch { /* ignore */ }
+    }
+    screenshotHotkeyAccel = hotkey
+    try {
+      globalShortcut.register(hotkey, () => win?.webContents.send('screenshot:hotkey'))
+    } catch { /* invalid accelerator */ }
+  })
+
+  ipcMain.on('screenshot:hotkey:clear', () => {
+    if (screenshotHotkeyAccel) {
+      try { globalShortcut.unregister(screenshotHotkeyAccel) } catch { /* ignore */ }
+      screenshotHotkeyAccel = ''
+    }
   })
 }
 

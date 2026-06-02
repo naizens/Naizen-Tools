@@ -13,6 +13,31 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   {
+    version: '0.5.1',
+    date: 'June 2, 2026',
+    sections: [
+      {
+        label: 'Fixed',
+        color: 'text-warn',
+        items: [
+          'Screenshot hotkey — now uses Electron globalShortcut directly (Control+PrintScreen works correctly)',
+          'iRacing SDK — fixed constructor crash on startup',
+        ],
+      },
+      {
+        label: 'New',
+        color: 'text-success',
+        items: [
+          'Screenshot gallery — view and browse all saved screenshots with thumbnail preview',
+          'Crop mode — choose between center crop (default) or top-left crop',
+          'Manual restore — option to skip auto window-restore if it causes issues',
+          'Error log — screenshot errors are written to userData/screenshot-errors.log',
+          'Dimension retry — re-acquires capture stream until dimensions match (up to 8s)',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.5.0',
     date: 'June 2, 2026',
     sections: [

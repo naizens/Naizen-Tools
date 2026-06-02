@@ -1,19 +1,18 @@
 import { EventEmitter } from 'events'
 
-// UIHidden flag = bit 16 in iRacing CameraState bitmask
-const UI_HIDDEN_FLAG = 1 << 16
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { IRacingSDK, CameraState } = require('irsdk-node')
+
+const UI_HIDDEN_FLAG: number = CameraState?.UIHidden ?? 8
 
 function delay(ms: number) {
   return new Promise<void>((r) => setTimeout(r, ms))
 }
 
 function parseCameraStateBitmask(flags: string[]): number {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const consts = require('irsdk-node')?.Consts ?? require('irsdk-node')?.default?.Consts
-  const CameraState = consts?.CameraState ?? {}
   let val = 0
   for (const f of flags) {
-    if (typeof CameraState[f] === 'number') val |= CameraState[f]
+    if (typeof CameraState?.[f] === 'number') val |= CameraState[f] as number
   }
   return val
 }
@@ -69,14 +68,11 @@ export class IracingBridge extends EventEmitter {
   get connected() { return this._connected }
 
   async start() {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const IRacingSDK = require('irsdk-node')
-    const SDKClass = IRacingSDK?.default ?? IRacingSDK
-    this.sdk = new SDKClass({ autoEnableTelemetry: true })
+    this.sdk = new IRacingSDK()
     this._active = true
 
     while (this._active) {
-      const isRunning: boolean = await SDKClass.IsSimRunning().catch(() => false)
+      const isRunning: boolean = await IRacingSDK.IsSimRunning().catch(() => false)
 
       if (!isRunning) {
         if (this._connected) {
@@ -101,9 +97,9 @@ export class IracingBridge extends EventEmitter {
         this.sessionInfo = raw?.data ?? raw ?? {}
         this.telemetry = {
           CamCameraState: telem?.values?.CamCameraState ?? [],
-          CamCarIdx: telem?.values?.CamCarIdx ?? 0,
-          Lap: telem?.values?.Lap ?? 0,
-          SessionNum: telem?.values?.SessionNum ?? 0,
+          CamCarIdx:      telem?.values?.CamCarIdx ?? 0,
+          Lap:            telem?.values?.Lap ?? 0,
+          SessionNum:     telem?.values?.SessionNum ?? 0,
         }
         this.emit('update')
       }
@@ -120,14 +116,14 @@ export class IracingBridge extends EventEmitter {
     }
   }
 
-  hideUI() {
+  hideUI(): number {
     const current = parseCameraStateBitmask(this.telemetry.CamCameraState)
-    try { this.sdk?.camControls?.setState(current | UI_HIDDEN_FLAG) } catch { /* ignore */ }
+    try { this.sdk?.changeCameraState(current | UI_HIDDEN_FLAG) } catch { /* ignore */ }
     return current
   }
 
   restoreUI(original: number) {
-    try { this.sdk?.camControls?.setState(original) } catch { /* ignore */ }
+    try { this.sdk?.changeCameraState(original) } catch { /* ignore */ }
   }
 
   async waitForUIHidden(timeoutMs = 500): Promise<void> {
