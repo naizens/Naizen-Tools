@@ -1,6 +1,14 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+export interface IracingApp {
+  id: string
+  name: string
+  path: string
+  args: string
+  enabled: boolean
+}
+
 interface ToolConfig {
   afk: { sHold: number; intervalMs: number; windowTitle: string; hotkey: string | null; enterEnabled: boolean; enterIntervalMs: number }
   whold: Record<string, never>
@@ -18,11 +26,16 @@ export interface ScreenshotConfig {
   keepAspectRatio: boolean
   outputFormat: 'jpeg' | 'png' | 'webp'
   folder: string
+  useCustomFilename: boolean
   filenameFormat: string
   hotkey: string
   screenWidth: number
   screenHeight: number
   manualRestore: boolean
+  manualRestoreX: number
+  manualRestoreY: number
+  manualRestoreWidth: number
+  manualRestoreHeight: number
 }
 
 interface ToolState {
@@ -38,6 +51,8 @@ interface ToolState {
   setCloseAction: (v: 'minimize' | 'quit') => void
   setAutostart: (v: boolean) => void
   setScreenshot: (cfg: Partial<ScreenshotConfig>) => void
+  iracingApps: IracingApp[]
+  setIracingApps: (apps: IracingApp[]) => void
   setConfig: <K extends keyof ToolConfig>(tool: K, cfg: Partial<ToolConfig[K]>) => void
   setRunning: (tool: keyof ToolConfig, running: boolean) => void
   setAfkTick: (remaining: number, presses: number) => void
@@ -58,11 +73,16 @@ export const useToolStore = create<ToolState>()(
         keepAspectRatio: false,
         outputFormat: 'jpeg',
         folder: '',
+        useCustomFilename: false,
         filenameFormat: '{track}-{driver}-{counter}',
         hotkey: 'Control+PrintScreen',
         screenWidth: 0,
         screenHeight: 0,
         manualRestore: false,
+        manualRestoreX: 0,
+        manualRestoreY: 0,
+        manualRestoreWidth: 1920,
+        manualRestoreHeight: 1080,
       },
       running: {
         afk: false,
@@ -81,6 +101,9 @@ export const useToolStore = create<ToolState>()(
 
       afkPresses: 0,
       afkRemaining: 0,
+
+      iracingApps: [],
+      setIracingApps: (iracingApps) => set({ iracingApps }),
 
       setTheme: (theme) => set({ theme }),
       setCloseAction: (closeAction) => set({ closeAction }),
@@ -137,6 +160,7 @@ export const useToolStore = create<ToolState>()(
         theme: s.theme,
         closeAction: s.closeAction,
         screenshot: s.screenshot,
+        iracingApps: s.iracingApps,
         config: s.config,
       }),
     },

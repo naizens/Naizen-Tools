@@ -1,6 +1,7 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, screen, Tray, shell, globalShortcut } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, protocol, screen, Tray, shell, globalShortcut } from 'electron'
 import { join } from 'path'
 import { readFileSync, writeFileSync } from 'fs'
+import { spawn, type ChildProcess } from 'child_process'
 import { autoUpdater } from 'electron-updater'
 import { IracingBridge } from './iracing'
 import {
@@ -28,6 +29,40 @@ const iracing = new IracingBridge()
 let takingScreenshot = false
 let pendingCapture: { resolve: (buf: Buffer) => void; reject: (e: Error) => void } | null = null
 let screenshotHotkeyAccel = ''
+
+// ─── iRacing App Launcher ─────────────────────────────────────────────────────
+
+interface AppEntry { id: string; name: string; path: string; args: string; enabled: boolean }
+const launchedApps = new Map<string, ChildProcess>()
+
+function launchApp(app_: AppEntry) {
+  if (launchedApps.has(app_.id)) return
+  try {
+    const args = app_.args.trim() ? app_.args.trim().split(/\s+/) : []
+    const proc = spawn(app_.path, args, { detached: true, stdio: 'ignore' })
+    proc.unref()
+    launchedApps.set(app_.id, proc)
+    proc.on('exit', () => {
+      launchedApps.delete(app_.id)
+      win?.webContents.send('apps:status', { id: app_.id, running: false })
+    })
+    win?.webContents.send('apps:status', { id: app_.id, running: true })
+  } catch (e) {
+    console.error(`[apps] failed to launch ${app_.path}:`, e)
+  }
+}
+
+function killApp(id: string) {
+  const proc = launchedApps.get(id)
+  if (!proc) return
+  try { proc.kill() } catch { /* ignore */ }
+  launchedApps.delete(id)
+  win?.webContents.send('apps:status', { id, running: false })
+}
+
+function killAllApps() {
+  for (const id of launchedApps.keys()) killApp(id)
+}
 
 // ─── Window State ─────────────────────────────────────────────────────────────
 
@@ -476,8 +511,9 @@ function setupIpc() {
       })
 
       const ext = EXT[config.outputFormat] ?? '.jpg'
+      const format = config.useCustomFilename ? config.filenameFormat : '{track}-{driver}-{counter}'
       const outPath = resolveFilename(
-        config.filenameFormat,
+        format,
         iracing.sessionInfo,
         iracing.telemetry.Lap,
         iracing.telemetry.SessionNum,
@@ -525,6 +561,31 @@ function setupIpc() {
 
   ipcMain.on('screenshot:open', (_, filePath: string) => {
     shell.showItemInFolder(filePath)
+  })
+
+  ipcMain.on('screenshot:openExternal', (_, filePath: string) => {
+    shell.openPath(filePath)
+  })
+
+  // ── App Launcher ──────────────────────────────────────────────────────────
+  ipcMain.on('apps:launch', (_, app_: AppEntry) => launchApp(app_))
+  ipcMain.on('apps:kill',   (_, id: string)     => killApp(id))
+  ipcMain.on('apps:launchAll', (_, apps: AppEntry[]) => {
+    apps.filter((a) => a.enabled).forEach(launchApp)
+  })
+  ipcMain.handle('apps:running', () => [...launchedApps.keys()])
+  ipcMain.handle('apps:pickExe', async () => {
+    const result = await dialog.showOpenDialog(win!, {
+      title: 'Select Application',
+      filters: [{ name: 'Executables', extensions: ['exe'] }, { name: 'All Files', extensions: ['*'] }],
+      properties: ['openFile'],
+    })
+    return result.canceled ? null : result.filePaths[0]
+  })
+
+  ipcMain.on('screenshot:restoreWindow', (_, bounds: { x: number; y: number; width: number; height: number }) => {
+    const win = getIracingWindow()
+    if (win) resizeWindow({ ...win, ...bounds }, bounds.width, bounds.height)
   })
 
   ipcMain.on('screenshot:hotkey:set', (_, hotkey: string) => {
@@ -628,8 +689,15 @@ app.whenReady().then(() => {
   createTray()
 
   // iRacing SDK bridge
-  iracing.on('connected',    () => win?.webContents.send('iracing:connected'))
-  iracing.on('disconnected', () => win?.webContents.send('iracing:disconnected'))
+  iracing.on('connected', () => {
+    win?.webContents.send('iracing:connected')
+    // Auto-launch enabled apps
+    win?.webContents.send('apps:getList')
+  })
+  iracing.on('disconnected', () => {
+    win?.webContents.send('iracing:disconnected')
+    killAllApps()
+  })
   iracing.start().catch((e) => console.error('[iracing]', e))
 
   if (app.isPackaged) {
@@ -642,5 +710,5 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => { /* tray handles quit */ })
-app.on('will-quit', () => { globalShortcut.unregisterAll(); iracing.stop() })
+app.on('will-quit', () => { globalShortcut.unregisterAll(); iracing.stop(); killAllApps() })
 app.on('activate', () => win?.show())

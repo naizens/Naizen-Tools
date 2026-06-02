@@ -76,6 +76,7 @@ async function captureFrame(sourceId: string | null, width: number, height: numb
 
 interface GalleryEntry { path: string; name: string; thumb: string | null; mtime: number }
 
+
 export default memo(function IracingScreenshot() {
   const cfg    = useToolStore((s) => s.screenshot)
   const setCfg = useToolStore((s) => s.setScreenshot)
@@ -168,7 +169,7 @@ export default memo(function IracingScreenshot() {
 
       {/* ── Left sidebar ─────────────────────────────────────────────────── */}
       <div className="w-56 shrink-0 flex flex-col border-r border-surface/10 overflow-y-auto">
-        <div className="p-4 space-y-4 flex-1">
+        <div className="p-4 space-y-5 flex-1">
 
           {/* iRacing status */}
           <div className={`flex items-center gap-2 text-xs font-mono ${connected ? 'text-success' : 'text-muted/40'}`}>
@@ -177,12 +178,12 @@ export default memo(function IracingScreenshot() {
           </div>
 
           {/* Resolution */}
-          <div ref={resRef} className="relative">
-            <p className="text-xs font-mono text-muted/40 mb-1 uppercase tracking-wider">Resolution</p>
+          <div ref={resRef} className="relative space-y-1.5">
+            <p className="text-sm font-semibold text-muted/80">Resolution</p>
             <button onClick={() => setResOpen((v) => !v)}
-              className="w-full flex items-center justify-between bg-surface/10 border border-surface/15 rounded-md px-3 h-8 text-xs font-mono text-muted/70 hover:border-surface/30 transition-colors">
+              className="w-full flex items-center justify-between bg-surface/10 border border-surface/15 rounded-md px-3 h-9 text-sm font-mono text-muted/70 hover:border-surface/30 transition-colors">
               {cfg.resolution.toUpperCase()}
-              <ChevronDown size={11} className={`transition-transform ${resOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown size={13} className={`transition-transform ${resOpen ? 'rotate-180' : ''}`} />
             </button>
             {resOpen && (
               <div className="absolute top-full left-0 right-0 mt-1 rounded-md bg-app border border-surface/15 shadow-xl overflow-hidden z-50">
@@ -194,18 +195,24 @@ export default memo(function IracingScreenshot() {
                 ))}
               </div>
             )}
+            <p className="text-xs font-mono text-muted/40">Target: {targetDims.w} × {targetDims.h}</p>
+            {(cfg.resolution === '7k' || cfg.resolution === '8k') && (
+              <p className="text-xs text-amber/70 leading-relaxed">
+                High resolutions may crash iRacing if you run out of VRAM.
+              </p>
+            )}
           </div>
 
           {cfg.resolution === 'custom' && (
             <div className="flex gap-2">
               <div className="flex-1">
-                <p className="text-xs font-mono text-muted/40 mb-1">W</p>
+                <p className="text-xs font-mono text-muted/40 mb-1">Width</p>
                 <input type="number" min={640} max={10000} value={cfg.customWidth}
                   onChange={(e) => setCfg({ customWidth: Number(e.target.value) })}
                   className="w-full bg-surface/10 border border-surface/15 rounded-md px-2 h-8 text-xs font-mono text-muted/70 focus:outline-none focus:border-accent/40" />
               </div>
               <div className="flex-1">
-                <p className="text-xs font-mono text-muted/40 mb-1">H</p>
+                <p className="text-xs font-mono text-muted/40 mb-1">Height</p>
                 <input type="number" min={360} max={10000} value={cfg.customHeight}
                   onChange={(e) => setCfg({ customHeight: Number(e.target.value) })}
                   className="w-full bg-surface/10 border border-surface/15 rounded-md px-2 h-8 text-xs font-mono text-muted/70 focus:outline-none focus:border-accent/40" />
@@ -213,56 +220,50 @@ export default memo(function IracingScreenshot() {
             </div>
           )}
 
-          <p className="text-xs font-mono text-muted/30">
-            Target: <span className="text-muted/60">{targetDims.w} × {targetDims.h}</span>
-          </p>
-
           {/* Crop watermark */}
-          <SidebarToggle
-            label="Crop Watermark"
-            desc="Removes iRacing UI overlay"
-            value={cfg.crop}
-            onChange={(v) => setCfg({ crop: v })}
-          />
-
-          {cfg.crop && (
-            <SidebarToggle
-              label="Crop from top-left"
-              desc={cfg.cropTopLeft ? 'Top-left mode' : 'Center mode (default)'}
-              value={cfg.cropTopLeft}
-              onChange={(v) => setCfg({ cropTopLeft: v })}
-            />
-          )}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-muted/80">Crop Watermark</p>
+              <RefToggle value={cfg.crop} onChange={(v) => setCfg({ crop: v })} />
+            </div>
+            {cfg.crop && (
+              <p className="text-xs text-cyan-400/60 leading-relaxed">
+                With this option, the final picture is slightly zoomed in. Regions near the borders of the screen will be cut off.
+              </p>
+            )}
+          </div>
 
           {/* Keep aspect ratio */}
-          <SidebarToggle
-            label="Keep Aspect Ratio"
-            desc={cfg.screenWidth > 0 ? `${cfg.screenWidth}×${cfg.screenHeight}` : 'Screen not detected'}
-            value={cfg.keepAspectRatio}
-            onChange={(v) => setCfg({ keepAspectRatio: v })}
-            action={<button onClick={() => setCfg({ screenWidth: window.screen.width, screenHeight: window.screen.height })}
-              className="text-accent/60 hover:text-accent text-xs font-mono transition-colors">detect</button>}
-          />
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-muted/80">Keep Aspect Ratio</p>
+              <RefToggle value={cfg.keepAspectRatio} onChange={(v) => setCfg({ keepAspectRatio: v })} />
+            </div>
+            {cfg.keepAspectRatio && cfg.screenWidth === 0 && (
+              <p className="text-xs text-amber/70">
+                Screen not detected —{' '}
+                <button onClick={() => setCfg({ screenWidth: window.screen.width, screenHeight: window.screen.height })}
+                  className="underline hover:text-amber transition-colors">detect</button>
+              </p>
+            )}
+          </div>
 
           {/* Screenshot button */}
           <button
             onClick={take}
             disabled={!connected || taking}
             className={[
-              'w-full py-2.5 rounded-md font-mono font-semibold text-sm transition-colors border',
+              'w-full py-3 rounded-md font-semibold text-sm transition-colors',
               connected && !taking
-                ? 'bg-warn/20 border-warn/30 text-warn hover:bg-warn/30'
-                : 'opacity-40 cursor-not-allowed bg-surface/10 border-surface/15 text-muted/50',
+                ? 'bg-warn text-white hover:bg-warn/80'
+                : 'opacity-40 cursor-not-allowed bg-surface/10 text-muted/50',
             ].join(' ')}
           >
-            <span className="flex items-center justify-center gap-2">
-              <Camera size={14} />
-              {taking ? 'Capturing…' : 'Screenshot'}
-            </span>
+            {taking ? 'Capturing…' : 'Screenshot'}
           </button>
 
           {cfg.hotkey && (
-            <p className="text-xs font-mono text-muted/25 text-center">{cfg.hotkey}</p>
+            <p className="text-xs font-mono text-muted/25 text-center -mt-2">{cfg.hotkey}</p>
           )}
 
           {error && (
@@ -271,106 +272,49 @@ export default memo(function IracingScreenshot() {
               <button onClick={() => setError(null)} className="text-muted/30 hover:text-muted/60 shrink-0 mt-0.5"><X size={11} /></button>
             </div>
           )}
+
+          <p className="text-xs text-muted/30 leading-relaxed">
+            Disable "Render Scene Using 3 Projections" in iRacing (Display {'>'} Monitor tab) to avoid vertical bands in screenshots.
+          </p>
         </div>
 
-        {/* Settings toggle */}
-        <div className="border-t border-surface/10 p-2">
-          <button onClick={() => setShowSettings((v) => !v)}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs font-mono transition-colors ${showSettings ? 'text-accent bg-accent/10' : 'text-muted/40 hover:text-muted/70 hover:bg-surface/10'}`}>
-            <Settings size={12} />
-            Settings
+        {/* Bottom bar */}
+        <div className="border-t border-surface/10 p-3 flex items-center gap-2">
+          <button onClick={() => setShowSettings(true)}
+            className="w-8 h-8 rounded-md flex items-center justify-center text-muted/40 hover:text-muted/80 hover:bg-surface/10 transition-colors">
+            <Settings size={15} />
           </button>
         </div>
       </div>
 
-      {/* ── Settings panel (slides in over main) ─────────────────────────── */}
-      {showSettings ? (
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-md space-y-4">
-            <p className="text-xs font-mono font-semibold text-muted/40 tracking-widest uppercase mb-4">Screenshot Settings</p>
-
-            {/* Format */}
-            <div ref={fmtRef} className="relative">
-              <p className="text-xs font-mono text-muted/40 mb-1">Output format</p>
-              <button onClick={() => setFmtOpen((v) => !v)}
-                className="w-full flex items-center justify-between bg-surface/10 border border-surface/15 rounded-md px-3 h-9 text-xs font-mono text-muted/70 hover:border-surface/30 transition-colors">
-                {FORMAT_LABELS[cfg.outputFormat]}
-                <ChevronDown size={12} className={`transition-transform ${fmtOpen ? 'rotate-180' : ''}`} />
-              </button>
-              {fmtOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 rounded-md bg-app border border-surface/15 shadow-xl overflow-hidden z-50">
-                  {Object.entries(FORMAT_LABELS).map(([key, label]) => (
-                    <button key={key} onClick={() => { setCfg({ outputFormat: key as 'jpeg' | 'png' | 'webp' }); setFmtOpen(false) }}
-                      className={`w-full text-left px-3 py-2 text-xs font-mono transition-colors ${cfg.outputFormat === key ? 'text-accent bg-accent/10' : 'text-muted/50 hover:bg-surface/10'}`}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Folder */}
-            <div>
-              <p className="text-xs font-mono text-muted/40 mb-1">Save folder</p>
-              <div className="flex gap-2">
-                <input readOnly value={cfg.folder}
-                  className="flex-1 min-w-0 bg-surface/10 border border-surface/15 rounded-md px-3 h-9 text-xs font-mono text-muted/50 cursor-default" />
-                <button onClick={pickFolder}
-                  className="w-9 h-9 shrink-0 rounded-md bg-surface/10 border border-surface/15 text-muted/40 hover:text-muted/80 transition-colors flex items-center justify-center">
-                  <FolderOpen size={14} />
-                </button>
-              </div>
-            </div>
-
-            {/* Filename format */}
-            <div>
-              <p className="text-xs font-mono text-muted/40 mb-1">Filename format</p>
-              <input value={cfg.filenameFormat} onChange={(e) => setCfg({ filenameFormat: e.target.value })}
-                className="w-full bg-surface/10 border border-surface/15 rounded-md px-3 h-9 text-xs font-mono text-muted/70 focus:outline-none focus:border-accent/40" />
-              <div className="flex flex-wrap gap-1 mt-2">
-                {FILENAME_TOKENS.map((t) => (
-                  <button key={t} onClick={() => setCfg({ filenameFormat: cfg.filenameFormat + t })}
-                    className="px-1.5 py-0.5 rounded text-xs font-mono text-muted/40 bg-surface/10 hover:text-accent hover:bg-accent/10 transition-colors">
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Hotkey */}
-            <div>
-              <p className="text-xs font-mono text-muted/40 mb-1">Hotkey</p>
-              <input value={cfg.hotkey} onChange={(e) => setCfg({ hotkey: e.target.value })}
-                placeholder="Control+PrintScreen"
-                className="w-full bg-surface/10 border border-surface/15 rounded-md px-3 h-9 text-xs font-mono text-muted/70 focus:outline-none focus:border-accent/40" />
-            </div>
-
-            {/* Manual restore */}
-            <SidebarToggle label="Manual window restore" desc="Skip auto-restore if it causes issues"
-              value={cfg.manualRestore} onChange={(v) => setCfg({ manualRestore: v })} />
-          </div>
-        </div>
-      ) : (
-
-        /* ── Preview + gallery ─────────────────────────────────────────── */
-        <div className="flex-1 flex flex-col overflow-hidden">
+      {/* ── Preview + gallery ────────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col overflow-hidden">
           {/* Preview */}
           <div className="flex-1 bg-black/30 flex items-center justify-center overflow-hidden relative">
             {preview || selected?.thumb ? (
               <>
                 <img
-                  src={`file://${preview ?? selected?.thumb}`}
+                  src={preview ?? selected?.thumb ?? ''}
                   alt="preview"
                   className="max-w-full max-h-full object-contain"
                 />
                 {selected && (
-                  <button
-                    onClick={() => window.api.openScreenshot(selected.path)}
-                    className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-black/60 hover:bg-black/80 text-xs font-mono text-white/70 hover:text-white transition-colors"
-                  >
-                    <ExternalLink size={11} />
-                    Show in folder
-                  </button>
+                  <div className="absolute top-3 right-3 flex items-center gap-2">
+                    <button
+                      onClick={() => window.api.openScreenshotExternal(selected.path)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-black/60 hover:bg-black/80 text-xs font-mono text-white/70 hover:text-white transition-colors"
+                    >
+                      <ExternalLink size={11} />
+                      Open
+                    </button>
+                    <button
+                      onClick={() => window.api.openScreenshot(selected.path)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-black/60 hover:bg-black/80 text-xs font-mono text-white/70 hover:text-white transition-colors"
+                    >
+                      <FolderOpen size={11} />
+                      Show in folder
+                    </button>
+                  </div>
                 )}
                 {selected && (
                   <p className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-md bg-black/60 text-xs font-mono text-white/50">
@@ -387,7 +331,8 @@ export default memo(function IracingScreenshot() {
           </div>
 
           {/* Thumbnail strip */}
-          <div className="h-28 shrink-0 border-t border-surface/10 flex items-center gap-2 px-3 overflow-x-auto">
+          <div className="h-32 shrink-0 border-t border-surface/10 flex items-center gap-2 px-3 overflow-x-scroll [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-surface/30 [&::-webkit-scrollbar-track]:bg-transparent"
+            onWheel={(e) => { e.currentTarget.scrollLeft += e.deltaY }}>
             <button onClick={loadGallery} className="shrink-0 w-8 h-20 rounded-md border border-surface/15 bg-surface/10 flex items-center justify-center text-muted/30 hover:text-muted/60 transition-colors" title="Refresh">
               <RefreshCw size={14} />
             </button>
@@ -401,7 +346,7 @@ export default memo(function IracingScreenshot() {
                 ].join(' ')}
               >
                 {entry.thumb ? (
-                  <img src={`file://${entry.thumb}`} alt={entry.name} className="w-full h-full object-cover" />
+                  <img src={entry.thumb ?? ''} alt={entry.name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-surface/10 flex items-center justify-center">
                     <Camera size={14} className="text-muted/20" />
@@ -411,30 +356,230 @@ export default memo(function IracingScreenshot() {
             ))}
           </div>
         </div>
+
+      {/* ── Settings modal ────────────────────────────────────────────────── */}
+      {showSettings && (
+        <SettingsModal cfg={cfg} setCfg={setCfg} onClose={() => setShowSettings(false)} pickFolder={pickFolder} />
       )}
     </div>
   )
 })
 
-// ─── Sidebar toggle row ───────────────────────────────────────────────────────
+// ─── Toggle (reference style) ─────────────────────────────────────────────────
 
-function SidebarToggle({ label, desc, value, onChange, action }: {
-  label: string
-  desc: string
-  value: boolean
-  onChange: (v: boolean) => void
-  action?: React.ReactNode
+function RefToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button onClick={() => onChange(!value)}
+      className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${value ? 'bg-warn/80' : 'bg-surface/20'}`}>
+      <span className={`absolute top-1 w-4 h-4 rounded-full transition-all ${value ? 'left-6 bg-white' : 'left-1 bg-muted/40'}`} />
+    </button>
+  )
+}
+
+// ─── Settings modal ───────────────────────────────────────────────────────────
+
+import type { ScreenshotConfig } from '@/store/toolStore'
+
+function SettingsModal({ cfg, setCfg, onClose, pickFolder }: {
+  cfg: ScreenshotConfig
+  setCfg: (c: Partial<ScreenshotConfig>) => void
+  onClose: () => void
+  pickFolder: () => void
+}) {
+  const [fmtOpen, setFmtOpen] = useState(false)
+  const fmtRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  useEffect(() => {
+    if (!fmtOpen) return
+    const h = (e: MouseEvent) => { if (!fmtRef.current?.contains(e.target as Node)) setFmtOpen(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [fmtOpen])
+
+  const FORMAT_OPTIONS = [
+    { key: 'jpeg', label: 'JPEG (quality 95%)' },
+    { key: 'png',  label: 'PNG (lossless)' },
+    { key: 'webp', label: 'WebP (quality 95%)' },
+  ]
+
+  const TOKEN_GROUPS = [
+    { label: 'Track',   tokens: ['{track}', '{trackFull}', '{trackCity}', '{trackCountry}', '{trackType}'] },
+    { label: 'Driver',  tokens: ['{driver}', '{driverAbbrev}', '{team}', '{carNumber}', '{car}', '{carFull}', '{carClass}', '{iRating}'] },
+    { label: 'Session', tokens: ['{sessionType}', '{lap}'] },
+    { label: 'Meta',    tokens: ['{date}', '{time}', '{datetime}', '{counter}'] },
+  ]
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="relative w-full max-w-2xl mx-4 rounded-lg bg-surface/8 backdrop-blur-xl border border-surface/12 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-surface/10 shrink-0">
+          <span className="text-sm font-semibold text-muted/80">Screenshot Settings</span>
+          <button onClick={onClose} className="w-7 h-7 rounded-md flex items-center justify-center text-muted/30 hover:text-muted/70 hover:bg-surface/10 transition-colors">
+            <X size={14} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto flex-1">
+          <div className="p-6 space-y-5">
+
+            {/* Screenshot Folder */}
+            <SettingsRow label="Screenshot Folder">
+              <div className="flex gap-2">
+                <input readOnly value={cfg.folder}
+                  className="flex-1 min-w-0 bg-surface/10 border border-surface/15 rounded-md px-3 h-9 text-xs font-mono text-muted/50 cursor-default" />
+                <button onClick={pickFolder}
+                  className="px-4 h-9 rounded-md bg-warn text-white text-xs font-semibold hover:bg-warn/80 transition-colors shrink-0">
+                  Select Folder
+                </button>
+              </div>
+            </SettingsRow>
+
+            {/* Hotkey */}
+            <SettingsRow label="Screenshot Keybind">
+              <div className="flex gap-2">
+                <input value={cfg.hotkey} onChange={(e) => setCfg({ hotkey: e.target.value })}
+                  placeholder="Control+PrintScreen"
+                  className="flex-1 bg-surface/10 border border-surface/15 rounded-md px-3 h-9 text-xs font-mono text-muted/70 focus:outline-none focus:border-accent/40" />
+              </div>
+            </SettingsRow>
+
+            {/* Filename format */}
+            <SettingsToggleRow
+              label="Custom Filename Format"
+              desc={`Use a custom pattern instead of the default (${'{track}-{driver}-{counter}'})`}
+              value={cfg.useCustomFilename}
+              onChange={(v) => setCfg({ useCustomFilename: v })}
+            />
+            {cfg.useCustomFilename && (
+              <div className="space-y-2 pl-4 border-l border-surface/10">
+                <p className="text-xs text-muted/40">Click fields to add them to the format. Type separators (-, _ etc.) directly.</p>
+                <div className="flex gap-2">
+                  <input value={cfg.filenameFormat} onChange={(e) => setCfg({ filenameFormat: e.target.value })}
+                    className="flex-1 bg-surface/10 border border-surface/15 rounded-md px-3 h-9 text-xs font-mono text-muted/70 focus:outline-none focus:border-accent/40" />
+                  <button onClick={() => setCfg({ filenameFormat: '{track}-{driver}-{counter}' })}
+                    className="px-3 h-9 rounded-md border border-surface/15 text-xs font-mono text-muted/50 hover:text-muted/80 hover:bg-surface/10 transition-colors">
+                    Reset
+                  </button>
+                </div>
+                <p className="text-xs font-mono text-muted/40">
+                  Preview: <span className="text-muted/70">{cfg.filenameFormat.replace('{track}', 'Daytona').replace('{driver}', 'Driver').replace('{counter}', '0')}.{cfg.outputFormat === 'jpeg' ? 'jpg' : cfg.outputFormat}</span>
+                </p>
+                {TOKEN_GROUPS.map((g) => (
+                  <div key={g.label}>
+                    <p className="text-xs font-mono text-muted/30 mb-1">{g.label}</p>
+                    <div className="flex flex-wrap gap-1">
+                      {g.tokens.map((t) => (
+                        <button key={t} onClick={() => setCfg({ filenameFormat: cfg.filenameFormat + t })}
+                          className="px-2 py-0.5 rounded text-xs font-mono bg-surface/15 text-muted/50 hover:text-accent hover:bg-accent/10 transition-colors">
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Output format */}
+            <SettingsRow label="Output Format">
+              <div ref={fmtRef} className="relative">
+                <button onClick={() => setFmtOpen((v) => !v)}
+                  className="flex items-center justify-between bg-surface/10 border border-surface/15 rounded-md px-3 h-9 text-xs font-mono text-muted/70 hover:border-surface/30 transition-colors w-56">
+                  {FORMAT_OPTIONS.find((o) => o.key === cfg.outputFormat)?.label}
+                  <ChevronDown size={12} className={`transition-transform ${fmtOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {fmtOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-56 rounded-md bg-app border border-surface/15 shadow-xl overflow-hidden z-50">
+                    {FORMAT_OPTIONS.map(({ key, label }) => (
+                      <button key={key} onClick={() => { setCfg({ outputFormat: key as 'jpeg' | 'png' | 'webp' }); setFmtOpen(false) }}
+                        className={`w-full text-left px-3 py-2 text-xs font-mono transition-colors ${cfg.outputFormat === key ? 'text-accent bg-accent/10' : 'text-muted/50 hover:bg-surface/10'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </SettingsRow>
+
+            {/* Prefer top-left crop */}
+            <SettingsToggleRow
+              label="Prefer top-left watermark crop"
+              desc="Crops only the bottom-right corner (3% expansion). When off, the screenshot is expanded by 6% and cropped equally from all sides."
+              value={cfg.cropTopLeft}
+              onChange={(v) => setCfg({ cropTopLeft: v })}
+            />
+
+            {/* Manual window restore */}
+            <SettingsToggleRow
+              label="Manual Window Restore"
+              desc="Override the automatic window restore with custom position and size. Useful for Ultrawide or Nvidia Surround."
+              value={cfg.manualRestore}
+              onChange={(v) => setCfg({ manualRestore: v })}
+            />
+
+            {cfg.manualRestore && (
+              <div className="space-y-3 pl-4 border-l border-surface/10">
+                <div className="grid grid-cols-2 gap-3">
+                  {(['manualRestoreX', 'manualRestoreY', 'manualRestoreWidth', 'manualRestoreHeight'] as const).map((key) => (
+                    <div key={key}>
+                      <p className="text-xs font-mono text-muted/40 mb-1 capitalize">{key.replace('manualRestore', '')}</p>
+                      <input type="number" value={(cfg as Record<string, unknown>)[key] as number}
+                        onChange={(e) => setCfg({ [key]: Number(e.target.value) } as Partial<ScreenshotConfig>)}
+                        className="w-full bg-surface/10 border border-surface/15 rounded-md px-3 h-9 text-xs font-mono text-muted/70 focus:outline-none focus:border-accent/40" />
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => window.api.restoreIracingWindow({
+                    x: cfg.manualRestoreX, y: cfg.manualRestoreY,
+                    width: cfg.manualRestoreWidth, height: cfg.manualRestoreHeight,
+                  })}
+                  className="w-full py-2.5 rounded-md bg-accent/20 border border-accent/30 text-accent text-xs font-mono font-semibold hover:bg-accent/30 transition-colors"
+                >
+                  Restore Now
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="px-6 py-3 border-t border-surface/10 flex justify-end shrink-0">
+          <span className="text-xs font-mono text-muted/20">ESC to close</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SettingsRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-sm font-semibold text-muted/70">{label}</p>
+      {children}
+    </div>
+  )
+}
+
+function SettingsToggleRow({ label, desc, value, onChange }: {
+  label: string; desc: string; value: boolean; onChange: (v: boolean) => void
 }) {
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-mono text-muted/70 font-semibold">{label}</p>
-        <button onClick={() => onChange(!value)}
-          className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${value ? 'bg-accent/30' : 'bg-muted/20'}`}>
-          <span className={`absolute top-0.5 w-4 h-4 rounded-full transition-all ${value ? 'left-4 bg-accent' : 'left-0.5 bg-muted/50'}`} />
-        </button>
+    <div className="flex items-start justify-between gap-4">
+      <div className="flex-1">
+        <p className="text-sm font-semibold text-muted/70">{label}</p>
+        <p className="text-xs text-muted/35 mt-0.5 leading-relaxed">{desc}</p>
       </div>
-      <p className="text-xs font-mono text-muted/30">{desc} {action}</p>
+      <RefToggle value={value} onChange={onChange} />
     </div>
   )
 }

@@ -10,6 +10,7 @@ const AutoClicker  = React.lazy(() => import('./components/tools/AutoClicker'))
 const AutoKey      = React.lazy(() => import('./components/tools/AutoKey'))
 const GameSettings       = React.lazy(() => import('./components/tools/GameSettings'))
 const IracingScreenshot  = React.lazy(() => import('./components/tools/IracingScreenshot'))
+const IracingApps        = React.lazy(() => import('./components/tools/IracingApps'))
 const PatchNotes   = React.lazy(() => import('./components/tools/PatchNotes'))
 const Settings     = React.lazy(() => import('./components/tools/Settings'))
 
@@ -79,6 +80,7 @@ export default function App() {
       <main className={[
         'flex-1 overflow-y-auto',
         activeTool === 'screenshot' ? '' : 'px-4 pb-4 pt-4',
+
       ].join(' ')}>
         <Suspense fallback={<div className="px-4 pt-4"><ToolFallback /></div>}>
           {activeTool !== 'screenshot' && (
@@ -89,7 +91,8 @@ export default function App() {
               {activeTool === 'game'    && <GameSettings />}
             </div>
           )}
-          {activeTool === 'screenshot' && <IracingScreenshot />}
+          {activeTool === 'screenshot'   && <IracingScreenshot />}
+          {activeTool === 'iracing-apps' && <IracingApps />}
         </Suspense>
       </main>
       {patchNotesOpen && (
