@@ -1,6 +1,6 @@
 import { app, desktopCapturer, screen } from 'electron'
 import { spawnSync } from 'child_process'
-import { appendFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs'
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync } from 'fs'
 import { join, extname } from 'path'
 import sharp from 'sharp'
 import type { IracingSessionInfo } from './iracing'
@@ -224,7 +224,7 @@ export async function makeThumbnail(sourcePath: string): Promise<string> {
     .webp({ quality: 80 })
     .toFile(thumbPath)
 
-  return thumbPath
+  return `data:image/webp;base64,${readFileSync(thumbPath).toString('base64')}`
 }
 
 // ─── Capture dimensions ───────────────────────────────────────────────────────
@@ -313,12 +313,9 @@ export async function listScreenshots(folder: string): Promise<ScreenshotEntry[]
 
     let thumb: string | null = null
     if (existsSync(thumbPath)) {
-      thumb = thumbPath
+      thumb = `data:image/webp;base64,${readFileSync(thumbPath).toString('base64')}`
     } else {
-      try {
-        await makeThumbnail(file.path)
-        thumb = thumbPath
-      } catch { /* skip thumbnail on error */ }
+      try { thumb = await makeThumbnail(file.path) } catch { /* skip */ }
     }
 
     results.push({ ...file, thumb })
