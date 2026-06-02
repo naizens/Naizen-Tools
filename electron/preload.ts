@@ -63,6 +63,8 @@ contextBridge.exposeInMainWorld('api', {
   clearScreenshotHotkey: () => ipcRenderer.send('screenshot:hotkey:clear'),
   listScreenshots: (folder: string) => ipcRenderer.invoke('screenshot:list', folder),
   openScreenshot: (filePath: string) => ipcRenderer.send('screenshot:open', filePath),
+  openScreenshotExternal: (filePath: string) => ipcRenderer.send('screenshot:openExternal', filePath),
+  restoreIracingWindow: (bounds: { x: number; y: number; width: number; height: number }) => ipcRenderer.send('screenshot:restoreWindow', bounds),
   pickScreenshotFolder: () => ipcRenderer.invoke('screenshot:pickFolder') as Promise<string | null>,
   defaultScreenshotFolder: () => ipcRenderer.invoke('screenshot:defaultFolder') as Promise<string>,
 })

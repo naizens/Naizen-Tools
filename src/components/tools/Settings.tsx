@@ -133,7 +133,21 @@ export default memo(function Settings({ onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-surface/10 flex justify-end">
+        <div className="px-5 py-3 border-t border-surface/10 flex items-center justify-between">
+          <button
+            onClick={() => {
+              setTheme('dark')
+              setCloseAction('minimize')
+              window.api.setCloseAction('minimize')
+              if (autostart !== false) {
+                setAutostart(false)
+                window.api.setAutostart(false).catch(() => {})
+              }
+            }}
+            className="text-xs font-mono text-muted/25 hover:text-muted/50 transition-colors"
+          >
+            Reset to defaults
+          </button>
           <span className="text-xs font-mono text-muted/20">ESC to close</span>
         </div>
       </div>

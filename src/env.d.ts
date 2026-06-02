@@ -39,6 +39,8 @@ interface Window {
     clearScreenshotHotkey: () => void
     listScreenshots: (folder: string) => Promise<{ path: string; name: string; thumb: string | null; mtime: number }[]>
     openScreenshot: (filePath: string) => void
+    openScreenshotExternal: (filePath: string) => void
+    restoreIracingWindow: (bounds: { x: number; y: number; width: number; height: number }) => void
     pickScreenshotFolder: () => Promise<string | null>
     defaultScreenshotFolder: () => Promise<string>
   }

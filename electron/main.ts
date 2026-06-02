@@ -527,6 +527,15 @@ function setupIpc() {
     shell.showItemInFolder(filePath)
   })
 
+  ipcMain.on('screenshot:openExternal', (_, filePath: string) => {
+    shell.openPath(filePath)
+  })
+
+  ipcMain.on('screenshot:restoreWindow', (_, bounds: { x: number; y: number; width: number; height: number }) => {
+    const win = getIracingWindow()
+    if (win) resizeWindow({ ...win, ...bounds }, bounds.width, bounds.height)
+  })
+
   ipcMain.on('screenshot:hotkey:set', (_, hotkey: string) => {
     if (screenshotHotkeyAccel) {
       try { globalShortcut.unregister(screenshotHotkeyAccel) } catch { /* ignore */ }

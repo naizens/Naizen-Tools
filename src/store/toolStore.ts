@@ -23,6 +23,10 @@ export interface ScreenshotConfig {
   screenWidth: number
   screenHeight: number
   manualRestore: boolean
+  manualRestoreX: number
+  manualRestoreY: number
+  manualRestoreWidth: number
+  manualRestoreHeight: number
 }
 
 interface ToolState {
@@ -63,6 +67,10 @@ export const useToolStore = create<ToolState>()(
         screenWidth: 0,
         screenHeight: 0,
         manualRestore: false,
+        manualRestoreX: 0,
+        manualRestoreY: 0,
+        manualRestoreWidth: 1920,
+        manualRestoreHeight: 1080,
       },
       running: {
         afk: false,
