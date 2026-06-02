@@ -76,6 +76,8 @@ async function captureFrame(sourceId: string | null, width: number, height: numb
 
 interface GalleryEntry { path: string; name: string; thumb: string | null; mtime: number }
 
+const toFileUrl = (p: string) => `localfile:///${p.replace(/\\/g, '/')}`
+
 export default memo(function IracingScreenshot() {
   const cfg    = useToolStore((s) => s.screenshot)
   const setCfg = useToolStore((s) => s.setScreenshot)
@@ -359,7 +361,7 @@ export default memo(function IracingScreenshot() {
             {preview || selected?.thumb ? (
               <>
                 <img
-                  src={`file://${preview ?? selected?.thumb}`}
+                  src={toFileUrl(preview ?? selected?.thumb ?? '')}
                   alt="preview"
                   className="max-w-full max-h-full object-contain"
                 />
@@ -401,7 +403,7 @@ export default memo(function IracingScreenshot() {
                 ].join(' ')}
               >
                 {entry.thumb ? (
-                  <img src={`file://${entry.thumb}`} alt={entry.name} className="w-full h-full object-cover" />
+                  <img src={toFileUrl(entry.thumb ?? '')} alt={entry.name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-surface/10 flex items-center justify-center">
                     <Camera size={14} className="text-muted/20" />

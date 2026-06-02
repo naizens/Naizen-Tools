@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, screen, Tray, shell, globalShortcut } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, net, protocol, screen, Tray, shell, globalShortcut } from 'electron'
 import { join } from 'path'
 import { readFileSync, writeFileSync } from 'fs'
 import { autoUpdater } from 'electron-updater'
@@ -622,7 +622,15 @@ function createTray() {
 
 // ─── App-Lifecycle ───────────────────────────────────────────────────────────
 
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'localfile', privileges: { secure: true, standard: true, supportFetchAPI: true } },
+])
+
 app.whenReady().then(() => {
+  protocol.handle('localfile', (request) => {
+    const filePath = decodeURIComponent(request.url.replace('localfile:///', '').replace(/\//g, '\\'))
+    return net.fetch(`file:///${filePath.replace(/\\/g, '/')}`)
+  })
   setupIpc()
   createWindow()
   createTray()
