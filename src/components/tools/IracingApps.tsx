@@ -25,7 +25,6 @@ export default memo(function IracingApps() {
   // ── Init ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     window.api.iracingStatus().then(setIracingConnected)
-    window.api.appsRunning().then((ids) => setRunning(new Set(ids)))
 
     const u1 = window.api.onIracingConnected(() => setIracingConnected(true))
     const u2 = window.api.onIracingDisconnected(() => {
@@ -55,6 +54,11 @@ export default memo(function IracingApps() {
   useEffect(() => {
     apps.forEach((a) => { void loadIcon(a.path) })
   }, [apps]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Register apps for status polling whenever the list changes
+  useEffect(() => {
+    window.api.appsWatch(apps)
+  }, [apps])
 
   // ── App management ────────────────────────────────────────────────────────
   const addApp = useCallback(async () => {

@@ -13,6 +13,41 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   {
+    version: '0.6.1',
+    date: 'June 2, 2026',
+    sections: [
+      {
+        label: 'New',
+        color: 'text-success',
+        items: [
+          'App icons — configured apps now show their executable icon',
+          'Start All / Stop All — launch or stop all enabled apps at once',
+        ],
+      },
+      {
+        label: 'Fixed',
+        color: 'text-warn',
+        items: [
+          'App status — running state is now detected from the OS process list, so launcher apps are tracked correctly',
+          'Admin apps — apps requiring elevation now launch via a UAC prompt instead of crashing',
+        ],
+      },
+    ],
+  },
+  {
+    version: '0.6.0',
+    date: 'June 2, 2026',
+    sections: [
+      {
+        label: 'New',
+        color: 'text-success',
+        items: [
+          'App Launcher — auto-start your overlays and tools when iRacing launches, and close them when you exit',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.5.2',
     date: 'June 2, 2026',
     sections: [

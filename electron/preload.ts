@@ -68,7 +68,7 @@ contextBridge.exposeInMainWorld('api', {
   appsLaunch: (app: unknown) => ipcRenderer.send('apps:launch', app),
   appsKill: (id: string) => ipcRenderer.send('apps:kill', id),
   appsLaunchAll: (apps: unknown[]) => ipcRenderer.send('apps:launchAll', apps),
-  appsRunning: () => ipcRenderer.invoke('apps:running') as Promise<string[]>,
+  appsWatch: (apps: unknown[]) => ipcRenderer.send('apps:watch', apps),
   appsPickExe: () => ipcRenderer.invoke('apps:pickExe') as Promise<string | null>,
   appsGetIcon: (exePath: string) => ipcRenderer.invoke('apps:getIcon', exePath) as Promise<string | null>,
   onAppsStatus: (cb: (data: { id: string; running: boolean }) => void) => {

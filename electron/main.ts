@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, protocol, screen, Tray, shell, globalShortcut } from 'electron'
 import { join } from 'path'
 import { readFileSync, writeFileSync } from 'fs'
-import { spawn, type ChildProcess } from 'child_process'
+import { spawn } from 'child_process'
 import { autoUpdater } from 'electron-updater'
 import { IracingBridge } from './iracing'
 import {
@@ -33,41 +33,88 @@ let screenshotHotkeyAccel = ''
 // ─── iRacing App Launcher ─────────────────────────────────────────────────────
 
 interface AppEntry { id: string; name: string; path: string; args: string; enabled: boolean }
-const launchedApps = new Map<string, ChildProcess>()
+
+function basename(p: string): string {
+  return p.split(/[\\/]/).pop() ?? p
+}
+
+// ─── Process status poller ───────────────────────────────────────────────────
+// Many apps are launchers that exit after spawning the real process, so we
+// detect "running" by checking the actual OS process list, not the child PID.
+
+let watchedApps: { id: string; exe: string }[] = []
+let pollTimer: ReturnType<typeof setInterval> | null = null
+
+function pollProcesses() {
+  if (watchedApps.length === 0) return
+  const proc = spawn('tasklist', ['/FO', 'CSV', '/NH'], { stdio: ['ignore', 'pipe', 'ignore'] })
+  let out = ''
+  proc.stdout.on('data', (d) => { out += d.toString() })
+  proc.on('close', () => {
+    const names = new Set<string>()
+    for (const line of out.split('\n')) {
+      const m = line.match(/^"([^"]+)"/)
+      if (m) names.add(m[1].toLowerCase())
+    }
+    for (const { id, exe } of watchedApps) {
+      win?.webContents.send('apps:status', { id, running: names.has(exe.toLowerCase()) })
+    }
+  })
+}
+
+function startPolling() {
+  if (pollTimer) return
+  pollTimer = setInterval(pollProcesses, 3000)
+  pollProcesses()
+}
+
+// Fallback for apps that require admin elevation (spawn throws EACCES)
+function launchElevated(app_: AppEntry) {
+  const argList = app_.args.trim()
+    ? `-ArgumentList '${app_.args.trim().replace(/'/g, "''")}' `
+    : ''
+  const ps = `Start-Process -FilePath '${app_.path.replace(/'/g, "''")}' ${argList}-Verb RunAs`
+  spawn('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { stdio: 'ignore' })
+    .on('exit', (code) => {
+      if (code !== 0) win?.webContents.send('apps:error', { id: app_.id, message: 'Launch cancelled or failed (admin required)' })
+      setTimeout(pollProcesses, 1500)
+    })
+}
 
 function launchApp(app_: AppEntry) {
-  if (launchedApps.has(app_.id)) return
   try {
     const args = app_.args.trim() ? app_.args.trim().split(/\s+/) : []
     const proc = spawn(app_.path, args, { detached: true, stdio: 'ignore' })
     proc.unref()
-    launchedApps.set(app_.id, proc)
-    proc.on('error', (e) => {
+    proc.on('error', (e: NodeJS.ErrnoException) => {
+      if (e.code === 'EACCES') { launchElevated(app_); return }  // needs elevation
       console.error(`[apps] ${app_.path}:`, e.message)
-      launchedApps.delete(app_.id)
-      win?.webContents.send('apps:status', { id: app_.id, running: false })
       win?.webContents.send('apps:error', { id: app_.id, message: e.message })
     })
-    proc.on('exit', () => {
-      launchedApps.delete(app_.id)
-      win?.webContents.send('apps:status', { id: app_.id, running: false })
-    })
-    win?.webContents.send('apps:status', { id: app_.id, running: true })
+    // Status is determined by the process poller, not the child PID.
+    setTimeout(pollProcesses, 1500)
   } catch (e) {
     console.error(`[apps] failed to launch ${app_.path}:`, e)
   }
 }
 
 function killApp(id: string) {
-  const proc = launchedApps.get(id)
-  if (!proc) return
-  try { proc.kill() } catch { /* ignore */ }
-  launchedApps.delete(id)
+  const entry = watchedApps.find((w) => w.id === id)
+  if (!entry) return
+  // Kill by image name — works for launchers and the real process alike.
+  spawn('taskkill', ['/IM', entry.exe, '/F', '/T'], { stdio: 'ignore' })
+    .on('exit', (code) => {
+      if (code !== 0) {
+        spawn('powershell', ['-NoProfile', '-NonInteractive', '-Command',
+          `Start-Process taskkill -ArgumentList '/IM','${entry.exe}','/F','/T' -Verb RunAs`], { stdio: 'ignore' })
+      }
+      setTimeout(pollProcesses, 1000)
+    })
   win?.webContents.send('apps:status', { id, running: false })
 }
 
 function killAllApps() {
-  for (const id of launchedApps.keys()) killApp(id)
+  for (const { id } of watchedApps) killApp(id)
 }
 
 // ─── Window State ─────────────────────────────────────────────────────────────
@@ -588,7 +635,12 @@ function setupIpc() {
   ipcMain.on('apps:launchAll', (_, apps: AppEntry[]) => {
     apps.filter((a) => a.enabled).forEach(launchApp)
   })
-  ipcMain.handle('apps:running', () => [...launchedApps.keys()])
+  // Register which apps to watch for running-status, and start polling.
+  ipcMain.on('apps:watch', (_, apps: AppEntry[]) => {
+    watchedApps = apps.filter((a) => a.path).map((a) => ({ id: a.id, exe: basename(a.path) }))
+    startPolling()
+    pollProcesses()
+  })
   ipcMain.handle('apps:pickExe', async () => {
     const result = await dialog.showOpenDialog(win!, {
       title: 'Select Application',

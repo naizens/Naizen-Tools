@@ -44,7 +44,7 @@ interface Window {
     appsLaunch: (app: unknown) => void
     appsKill: (id: string) => void
     appsLaunchAll: (apps: unknown[]) => void
-    appsRunning: () => Promise<string[]>
+    appsWatch: (apps: unknown[]) => void
     appsPickExe: () => Promise<string | null>
     appsGetIcon: (exePath: string) => Promise<string | null>
     onAppsStatus: (cb: (data: { id: string; running: boolean }) => void) => () => void
