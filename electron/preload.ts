@@ -68,8 +68,9 @@ contextBridge.exposeInMainWorld('api', {
   appsLaunch: (app: unknown) => ipcRenderer.send('apps:launch', app),
   appsKill: (id: string) => ipcRenderer.send('apps:kill', id),
   appsLaunchAll: (apps: unknown[]) => ipcRenderer.send('apps:launchAll', apps),
-  appsRunning: () => ipcRenderer.invoke('apps:running') as Promise<string[]>,
+  appsWatch: (apps: unknown[]) => ipcRenderer.send('apps:watch', apps),
   appsPickExe: () => ipcRenderer.invoke('apps:pickExe') as Promise<string | null>,
+  appsGetIcon: (exePath: string) => ipcRenderer.invoke('apps:getIcon', exePath) as Promise<string | null>,
   onAppsStatus: (cb: (data: { id: string; running: boolean }) => void) => {
     const handler = (_: Electron.IpcRendererEvent, data: unknown) => cb(data as { id: string; running: boolean })
     ipcRenderer.on('apps:status', handler)
@@ -78,6 +79,11 @@ contextBridge.exposeInMainWorld('api', {
   onAppsGetList: (cb: () => void) => {
     ipcRenderer.on('apps:getList', cb)
     return () => ipcRenderer.off('apps:getList', cb)
+  },
+  onAppsError: (cb: (data: { id: string; message: string }) => void) => {
+    const handler = (_: Electron.IpcRendererEvent, data: unknown) => cb(data as { id: string; message: string })
+    ipcRenderer.on('apps:error', handler)
+    return () => ipcRenderer.off('apps:error', handler)
   },
   pickScreenshotFolder: () => ipcRenderer.invoke('screenshot:pickFolder') as Promise<string | null>,
   defaultScreenshotFolder: () => ipcRenderer.invoke('screenshot:defaultFolder') as Promise<string>,
