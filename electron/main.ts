@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, protocol, screen, Tray, shell, globalShortcut } from 'electron'
 import { join } from 'path'
-import { readFileSync, writeFileSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { spawn } from 'child_process'
 import { autoUpdater } from 'electron-updater'
 import { IracingBridge } from './iracing'
@@ -32,21 +32,38 @@ let screenshotHotkeyAccel = ''
 
 // ─── iRacing App Launcher ─────────────────────────────────────────────────────
 
-interface AppEntry { id: string; name: string; path: string; args: string; enabled: boolean }
+interface AppEntry {
+  id: string
+  name: string
+  path: string
+  args: string
+  startHidden: boolean
+  startWithSim: boolean
+  stopWithSim: boolean
+  startWithUi: boolean
+  stopWithUi: boolean
+  includeInStartAll: boolean
+  includeInStopAll: boolean
+}
+
+// iRacing process names we watch for auto start/stop triggers
+const IRACING_UI_EXE  = 'iracingui.exe'
+const IRACING_SIM_EXE = 'iracingsim64dx11.exe'
 
 function basename(p: string): string {
   return p.split(/[\\/]/).pop() ?? p
 }
 
 // ─── Process status poller ───────────────────────────────────────────────────
-// Many apps are launchers that exit after spawning the real process, so we
-// detect "running" by checking the actual OS process list, not the child PID.
+// Detect "running" via the actual OS process list (many apps are launchers that
+// exit after spawning the real process). Also drives iRacing auto start/stop.
 
-let watchedApps: { id: string; exe: string }[] = []
+let watchedApps: AppEntry[] = []
 let pollTimer: ReturnType<typeof setInterval> | null = null
+let simRunning = false
+let uiRunning = false
 
 function pollProcesses() {
-  if (watchedApps.length === 0) return
   const proc = spawn('tasklist', ['/FO', 'CSV', '/NH'], { stdio: ['ignore', 'pipe', 'ignore'] })
   let out = ''
   proc.stdout.on('data', (d) => { out += d.toString() })
@@ -56,25 +73,44 @@ function pollProcesses() {
       const m = line.match(/^"([^"]+)"/)
       if (m) names.add(m[1].toLowerCase())
     }
-    for (const { id, exe } of watchedApps) {
-      win?.webContents.send('apps:status', { id, running: names.has(exe.toLowerCase()) })
+
+    // App running status + file existence
+    for (const a of watchedApps) {
+      const exe = basename(a.path).toLowerCase()
+      win?.webContents.send('apps:status', {
+        id: a.id,
+        running: exe ? names.has(exe) : false,
+        exists: a.path ? existsSync(a.path) : false,
+      })
     }
+
+    // iRacing dual-process detection → auto start/stop
+    const simNow = names.has(IRACING_SIM_EXE)
+    const uiNow  = names.has(IRACING_UI_EXE)
+
+    if (simNow && !simRunning) watchedApps.filter((a) => a.startWithSim).forEach(launchApp)
+    if (!simNow && simRunning) watchedApps.filter((a) => a.stopWithSim).forEach((a) => killApp(a.id))
+    if (uiNow && !uiRunning)   watchedApps.filter((a) => a.startWithUi).forEach(launchApp)
+    if (!uiNow && uiRunning)   watchedApps.filter((a) => a.stopWithUi).forEach((a) => killApp(a.id))
+
+    simRunning = simNow
+    uiRunning  = uiNow
   })
 }
 
 function startPolling() {
   if (pollTimer) return
-  pollTimer = setInterval(pollProcesses, 3000)
+  pollTimer = setInterval(pollProcesses, 2000)
   pollProcesses()
 }
 
 // Fallback for apps that require admin elevation (spawn throws EACCES)
 function launchElevated(app_: AppEntry) {
-  const argList = app_.args.trim()
-    ? `-ArgumentList '${app_.args.trim().replace(/'/g, "''")}' `
-    : ''
-  const ps = `Start-Process -FilePath '${app_.path.replace(/'/g, "''")}' ${argList}-Verb RunAs`
-  spawn('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { stdio: 'ignore' })
+  const parts = [`Start-Process -FilePath '${app_.path.replace(/'/g, "''")}'`]
+  if (app_.args.trim()) parts.push(`-ArgumentList '${app_.args.trim().replace(/'/g, "''")}'`)
+  if (app_.startHidden) parts.push('-WindowStyle Hidden')
+  parts.push('-Verb RunAs')
+  spawn('powershell', ['-NoProfile', '-NonInteractive', '-Command', parts.join(' ')], { stdio: 'ignore' })
     .on('exit', (code) => {
       if (code !== 0) win?.webContents.send('apps:error', { id: app_.id, message: 'Launch cancelled or failed (admin required)' })
       setTimeout(pollProcesses, 1500)
@@ -82,16 +118,20 @@ function launchElevated(app_: AppEntry) {
 }
 
 function launchApp(app_: AppEntry) {
+  if (!app_.path || !existsSync(app_.path)) return
   try {
     const args = app_.args.trim() ? app_.args.trim().split(/\s+/) : []
-    const proc = spawn(app_.path, args, { detached: true, stdio: 'ignore' })
+    const proc = spawn(app_.path, args, {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: app_.startHidden,
+    })
     proc.unref()
     proc.on('error', (e: NodeJS.ErrnoException) => {
       if (e.code === 'EACCES') { launchElevated(app_); return }  // needs elevation
       console.error(`[apps] ${app_.path}:`, e.message)
       win?.webContents.send('apps:error', { id: app_.id, message: e.message })
     })
-    // Status is determined by the process poller, not the child PID.
     setTimeout(pollProcesses, 1500)
   } catch (e) {
     console.error(`[apps] failed to launch ${app_.path}:`, e)
@@ -100,21 +140,21 @@ function launchApp(app_: AppEntry) {
 
 function killApp(id: string) {
   const entry = watchedApps.find((w) => w.id === id)
-  if (!entry) return
-  // Kill by image name — works for launchers and the real process alike.
-  spawn('taskkill', ['/IM', entry.exe, '/F', '/T'], { stdio: 'ignore' })
+  if (!entry?.path) return
+  const exe = basename(entry.path)
+  spawn('taskkill', ['/IM', exe, '/F', '/T'], { stdio: 'ignore' })
     .on('exit', (code) => {
       if (code !== 0) {
         spawn('powershell', ['-NoProfile', '-NonInteractive', '-Command',
-          `Start-Process taskkill -ArgumentList '/IM','${entry.exe}','/F','/T' -Verb RunAs`], { stdio: 'ignore' })
+          `Start-Process taskkill -ArgumentList '/IM','${exe}','/F','/T' -Verb RunAs`], { stdio: 'ignore' })
       }
       setTimeout(pollProcesses, 1000)
     })
-  win?.webContents.send('apps:status', { id, running: false })
+  win?.webContents.send('apps:status', { id, running: false, exists: existsSync(entry.path) })
 }
 
 function killAllApps() {
-  for (const { id } of watchedApps) killApp(id)
+  for (const a of watchedApps) killApp(a.id)
 }
 
 // ─── Window State ─────────────────────────────────────────────────────────────
@@ -630,14 +670,16 @@ function setupIpc() {
     } catch { return null }
   })
 
-  ipcMain.on('apps:launch', (_, app_: AppEntry) => launchApp(app_))
-  ipcMain.on('apps:kill',   (_, id: string)     => killApp(id))
-  ipcMain.on('apps:launchAll', (_, apps: AppEntry[]) => {
-    apps.filter((a) => a.enabled).forEach(launchApp)
+  ipcMain.on('apps:launch', (_, id: string) => {
+    const a = watchedApps.find((w) => w.id === id)
+    if (a) launchApp(a)
   })
-  // Register which apps to watch for running-status, and start polling.
+  ipcMain.on('apps:kill', (_, id: string) => killApp(id))
+  ipcMain.on('apps:startAll', () => watchedApps.filter((a) => a.includeInStartAll).forEach(launchApp))
+  ipcMain.on('apps:stopAll',  () => watchedApps.filter((a) => a.includeInStopAll).forEach((a) => killApp(a.id)))
+  // Register the active profile's apps to watch/auto-manage, and start polling.
   ipcMain.on('apps:watch', (_, apps: AppEntry[]) => {
-    watchedApps = apps.filter((a) => a.path).map((a) => ({ id: a.id, exe: basename(a.path) }))
+    watchedApps = apps.filter((a) => a.path)
     startPolling()
     pollProcesses()
   })
@@ -755,16 +797,10 @@ app.whenReady().then(() => {
   createWindow()
   createTray()
 
-  // iRacing SDK bridge
-  iracing.on('connected', () => {
-    win?.webContents.send('iracing:connected')
-    // Auto-launch enabled apps
-    win?.webContents.send('apps:getList')
-  })
-  iracing.on('disconnected', () => {
-    win?.webContents.send('iracing:disconnected')
-    killAllApps()
-  })
+  // iRacing SDK bridge (for screenshot tool). App auto start/stop is driven by
+  // the process poller which watches iRacingUI.exe / iRacingSim64DX11.exe.
+  iracing.on('connected',    () => win?.webContents.send('iracing:connected'))
+  iracing.on('disconnected', () => win?.webContents.send('iracing:disconnected'))
   iracing.start().catch((e) => console.error('[iracing]', e))
 
   if (app.isPackaged) {

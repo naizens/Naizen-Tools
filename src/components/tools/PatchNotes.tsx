@@ -13,6 +13,23 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   {
+    version: '0.7.0',
+    date: 'June 2, 2026',
+    sections: [
+      {
+        label: 'New',
+        color: 'text-success',
+        items: [
+          'App Hub — card-based app manager with START / RUNNING / NOT FOUND states',
+          'Profiles — separate app sets for sprint, endurance, or shared rigs',
+          'Auto start/stop — trigger apps on iRacing Sim or iRacing UI launch/close, independently',
+          'Per-app options — start hidden, include in Start All / Stop All',
+          'Start All / Stop All — bulk control respecting each app’s include flags',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.6.1',
     date: 'June 2, 2026',
     sections: [

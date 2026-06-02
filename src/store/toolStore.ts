@@ -6,7 +6,36 @@ export interface IracingApp {
   name: string
   path: string
   args: string
-  enabled: boolean
+  startHidden: boolean
+  startWithSim: boolean
+  stopWithSim: boolean
+  startWithUi: boolean
+  stopWithUi: boolean
+  includeInStartAll: boolean
+  includeInStopAll: boolean
+}
+
+export interface IracingProfile {
+  id: string
+  name: string
+  apps: IracingApp[]
+}
+
+export function defaultApp(partial: Partial<IracingApp> = {}): IracingApp {
+  return {
+    id: Math.random().toString(36).slice(2, 10),
+    name: 'App',
+    path: '',
+    args: '',
+    startHidden: false,
+    startWithSim: true,
+    stopWithSim: true,
+    startWithUi: false,
+    stopWithUi: false,
+    includeInStartAll: true,
+    includeInStopAll: true,
+    ...partial,
+  }
 }
 
 interface ToolConfig {
@@ -51,8 +80,11 @@ interface ToolState {
   setCloseAction: (v: 'minimize' | 'quit') => void
   setAutostart: (v: boolean) => void
   setScreenshot: (cfg: Partial<ScreenshotConfig>) => void
-  iracingApps: IracingApp[]
-  setIracingApps: (apps: IracingApp[]) => void
+  iracingProfiles: IracingProfile[]
+  activeProfileId: string
+  setProfiles: (profiles: IracingProfile[]) => void
+  setActiveProfile: (id: string) => void
+  setProfileApps: (profileId: string, apps: IracingApp[]) => void
   setConfig: <K extends keyof ToolConfig>(tool: K, cfg: Partial<ToolConfig[K]>) => void
   setRunning: (tool: keyof ToolConfig, running: boolean) => void
   setAfkTick: (remaining: number, presses: number) => void
@@ -102,8 +134,16 @@ export const useToolStore = create<ToolState>()(
       afkPresses: 0,
       afkRemaining: 0,
 
-      iracingApps: [],
-      setIracingApps: (iracingApps) => set({ iracingApps }),
+      iracingProfiles: [{ id: 'default', name: 'Default', apps: [] }],
+      activeProfileId: 'default',
+      setProfiles: (iracingProfiles) => set({ iracingProfiles }),
+      setActiveProfile: (activeProfileId) => set({ activeProfileId }),
+      setProfileApps: (profileId, apps) =>
+        set((s) => ({
+          iracingProfiles: s.iracingProfiles.map((p) =>
+            p.id === profileId ? { ...p, apps } : p,
+          ),
+        })),
 
       setTheme: (theme) => set({ theme }),
       setCloseAction: (closeAction) => set({ closeAction }),
@@ -134,10 +174,15 @@ export const useToolStore = create<ToolState>()(
     }),
     {
       name: 'naizen-tools-store',
-      version: 6,
+      version: 7,
       migrate: (stored: unknown) => {
         const s = stored as {
           theme?: string
+          closeAction?: 'minimize' | 'quit'
+          screenshot?: ScreenshotConfig
+          iracingApps?: Partial<IracingApp>[]
+          iracingProfiles?: IracingProfile[]
+          activeProfileId?: string
           config?: {
             afk?: Record<string, unknown>
             clicker?: Record<string, unknown>
@@ -145,8 +190,18 @@ export const useToolStore = create<ToolState>()(
             game?: Record<string, unknown>
           }
         }
+        // Carry over legacy flat app list into a default profile
+        const profiles: IracingProfile[] = s.iracingProfiles ?? [{
+          id: 'default',
+          name: 'Default',
+          apps: (s.iracingApps ?? []).map((a) => defaultApp(a)),
+        }]
         return {
           theme: s.theme ?? 'dark',
+          closeAction: s.closeAction ?? 'minimize',
+          screenshot: s.screenshot,
+          iracingProfiles: profiles,
+          activeProfileId: s.activeProfileId ?? profiles[0]?.id ?? 'default',
           config: {
             afk:     { sHold: 200, intervalMs: 400000, windowTitle: '', hotkey: null, enterEnabled: false, enterIntervalMs: 60000, ...(s.config?.afk ?? {}) },
             whold:   {},
@@ -160,7 +215,8 @@ export const useToolStore = create<ToolState>()(
         theme: s.theme,
         closeAction: s.closeAction,
         screenshot: s.screenshot,
-        iracingApps: s.iracingApps,
+        iracingProfiles: s.iracingProfiles,
+        activeProfileId: s.activeProfileId,
         config: s.config,
       }),
     },

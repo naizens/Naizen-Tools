@@ -44,6 +44,22 @@ export default function App() {
     window.api.setCloseAction(useToolStore.getState().closeAction)
   }, [])
 
+  // Drive the iRacing app launcher app-wide (auto start/stop works even when
+  // the Apps tab is not open). Re-sends only when the active profile's apps change.
+  useEffect(() => {
+    let last = ''
+    const sync = (s: ReturnType<typeof useToolStore.getState>) => {
+      const profile = s.iracingProfiles.find((p) => p.id === s.activeProfileId)
+      const apps = profile?.apps ?? []
+      const key = JSON.stringify(apps)
+      if (key === last) return
+      last = key
+      window.api.appsWatch(apps)
+    }
+    sync(useToolStore.getState())
+    return useToolStore.subscribe(sync)
+  }, [])
+
   useEffect(() => {
     window.api.onToolStatus(({ tool, running }) => {
       setRunning(tool as Parameters<typeof setRunning>[0], running)
