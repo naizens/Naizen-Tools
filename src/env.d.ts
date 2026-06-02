@@ -34,6 +34,11 @@ interface Window {
     takeScreenshot: (config: unknown) => Promise<{ path: string; thumb: string | null }>
     submitScreenshotBuffer: (buf: Buffer) => void
     onScreenshotCapture: (cb: (data: { sourceId: string | null; width: number; height: number }) => void) => () => void
+    onScreenshotHotkey: (cb: () => void) => () => void
+    setScreenshotHotkey: (hotkey: string) => void
+    clearScreenshotHotkey: () => void
+    listScreenshots: (folder: string) => Promise<{ path: string; name: string; thumb: string | null; mtime: number }[]>
+    openScreenshot: (filePath: string) => void
     pickScreenshotFolder: () => Promise<string | null>
     defaultScreenshotFolder: () => Promise<string>
   }

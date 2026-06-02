@@ -14,6 +14,7 @@ export interface ScreenshotConfig {
   customWidth: number
   customHeight: number
   crop: boolean
+  cropTopLeft: boolean
   keepAspectRatio: boolean
   outputFormat: 'jpeg' | 'png' | 'webp'
   folder: string
@@ -21,6 +22,7 @@ export interface ScreenshotConfig {
   hotkey: string
   screenWidth: number
   screenHeight: number
+  manualRestore: boolean
 }
 
 interface ToolState {
@@ -52,6 +54,7 @@ export const useToolStore = create<ToolState>()(
         customWidth: 1920,
         customHeight: 1080,
         crop: true,
+        cropTopLeft: false,
         keepAspectRatio: false,
         outputFormat: 'jpeg',
         folder: '',
@@ -59,6 +62,7 @@ export const useToolStore = create<ToolState>()(
         hotkey: 'Control+PrintScreen',
         screenWidth: 0,
         screenHeight: 0,
+        manualRestore: false,
       },
       running: {
         afk: false,
