@@ -14,6 +14,7 @@ export default memo(function IracingApps() {
   const [running, setRunning] = useState<Set<string>>(new Set())
   const [iracingConnected, setIracingConnected] = useState(false)
   const [icons, setIcons] = useState<Record<string, string>>({})
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const loadIcon = useCallback(async (path: string) => {
     if (icons[path]) return
@@ -39,12 +40,16 @@ export default memo(function IracingApps() {
       })
     })
     // When iRacing connects, main asks renderer for the app list to auto-launch
+    const u5 = window.api.onAppsError(({ id, message }) => {
+      setErrors((prev) => ({ ...prev, [id]: message }))
+    })
+
     const u4 = window.api.onAppsGetList(() => {
       const currentApps = useToolStore.getState().iracingApps
       window.api.appsLaunchAll(currentApps)
     })
 
-    return () => { u1(); u2(); u3(); u4() }
+    return () => { u1(); u2(); u3(); u4(); u5() }
   }, [])
 
   useEffect(() => {
@@ -127,9 +132,10 @@ export default memo(function IracingApps() {
             app={app}
             running={running.has(app.id)}
             icon={icons[app.path] ?? null}
+            error={errors[app.id] ?? null}
             onUpdate={updateApp}
             onRemove={removeApp}
-            onToggleRun={toggleRun}
+            onToggleRun={(a) => { setErrors((p) => { const n = {...p}; delete n[a.id]; return n }); toggleRun(a) }}
           />
         ))}
       </div>
@@ -148,10 +154,11 @@ export default memo(function IracingApps() {
 
 // ─── App row ──────────────────────────────────────────────────────────────────
 
-function AppRow({ app, running, icon, onUpdate, onRemove, onToggleRun }: {
+function AppRow({ app, running, icon, error, onUpdate, onRemove, onToggleRun }: {
   app: IracingApp
   running: boolean
   icon: string | null
+  error: string | null
   onUpdate: (id: string, patch: Partial<IracingApp>) => void
   onRemove: (id: string) => void
   onToggleRun: (app: IracingApp) => void
@@ -187,10 +194,9 @@ function AppRow({ app, running, icon, onUpdate, onRemove, onToggleRun }: {
           <p className="text-xs font-mono text-muted/25 truncate">{app.path}</p>
         </button>
 
-        {/* Running status */}
-        {running && (
-          <span className="text-xs font-mono text-success/70 shrink-0">running</span>
-        )}
+        {/* Status */}
+        {running && <span className="text-xs font-mono text-success/70 shrink-0">running</span>}
+        {error && !running && <span className="text-xs font-mono text-warn/60 shrink-0 truncate max-w-[100px]" title={error}>error</span>}
 
         {/* Launch/Stop button */}
         <button

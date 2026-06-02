@@ -42,6 +42,12 @@ function launchApp(app_: AppEntry) {
     const proc = spawn(app_.path, args, { detached: true, stdio: 'ignore' })
     proc.unref()
     launchedApps.set(app_.id, proc)
+    proc.on('error', (e) => {
+      console.error(`[apps] ${app_.path}:`, e.message)
+      launchedApps.delete(app_.id)
+      win?.webContents.send('apps:status', { id: app_.id, running: false })
+      win?.webContents.send('apps:error', { id: app_.id, message: e.message })
+    })
     proc.on('exit', () => {
       launchedApps.delete(app_.id)
       win?.webContents.send('apps:status', { id: app_.id, running: false })
