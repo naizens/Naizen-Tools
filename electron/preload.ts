@@ -65,20 +65,17 @@ contextBridge.exposeInMainWorld('api', {
   openScreenshot: (filePath: string) => ipcRenderer.send('screenshot:open', filePath),
   openScreenshotExternal: (filePath: string) => ipcRenderer.send('screenshot:openExternal', filePath),
   restoreIracingWindow: (bounds: { x: number; y: number; width: number; height: number }) => ipcRenderer.send('screenshot:restoreWindow', bounds),
-  appsLaunch: (app: unknown) => ipcRenderer.send('apps:launch', app),
+  appsLaunch: (id: string) => ipcRenderer.send('apps:launch', id),
   appsKill: (id: string) => ipcRenderer.send('apps:kill', id),
-  appsLaunchAll: (apps: unknown[]) => ipcRenderer.send('apps:launchAll', apps),
+  appsStartAll: () => ipcRenderer.send('apps:startAll'),
+  appsStopAll: () => ipcRenderer.send('apps:stopAll'),
   appsWatch: (apps: unknown[]) => ipcRenderer.send('apps:watch', apps),
   appsPickExe: () => ipcRenderer.invoke('apps:pickExe') as Promise<string | null>,
   appsGetIcon: (exePath: string) => ipcRenderer.invoke('apps:getIcon', exePath) as Promise<string | null>,
-  onAppsStatus: (cb: (data: { id: string; running: boolean }) => void) => {
-    const handler = (_: Electron.IpcRendererEvent, data: unknown) => cb(data as { id: string; running: boolean })
+  onAppsStatus: (cb: (data: { id: string; running: boolean; exists: boolean }) => void) => {
+    const handler = (_: Electron.IpcRendererEvent, data: unknown) => cb(data as { id: string; running: boolean; exists: boolean })
     ipcRenderer.on('apps:status', handler)
     return () => ipcRenderer.off('apps:status', handler)
-  },
-  onAppsGetList: (cb: () => void) => {
-    ipcRenderer.on('apps:getList', cb)
-    return () => ipcRenderer.off('apps:getList', cb)
   },
   onAppsError: (cb: (data: { id: string; message: string }) => void) => {
     const handler = (_: Electron.IpcRendererEvent, data: unknown) => cb(data as { id: string; message: string })
