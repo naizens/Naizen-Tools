@@ -28,6 +28,7 @@ export interface ScreenshotConfig {
   keepAspectRatio: boolean
   outputFormat: 'jpeg' | 'png' | 'webp'
   folder: string
+  useCustomFilename: boolean
   filenameFormat: string
   hotkey: string
   screenWidth: number

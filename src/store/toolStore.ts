@@ -18,6 +18,7 @@ export interface ScreenshotConfig {
   keepAspectRatio: boolean
   outputFormat: 'jpeg' | 'png' | 'webp'
   folder: string
+  useCustomFilename: boolean
   filenameFormat: string
   hotkey: string
   screenWidth: number
@@ -62,6 +63,7 @@ export const useToolStore = create<ToolState>()(
         keepAspectRatio: false,
         outputFormat: 'jpeg',
         folder: '',
+        useCustomFilename: false,
         filenameFormat: '{track}-{driver}-{counter}',
         hotkey: 'Control+PrintScreen',
         screenWidth: 0,

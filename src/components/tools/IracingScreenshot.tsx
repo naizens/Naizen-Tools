@@ -454,8 +454,15 @@ function SettingsModal({ cfg, setCfg, onClose, pickFolder }: {
             </SettingsRow>
 
             {/* Filename format */}
-            <SettingsRow label="Custom Filename Format">
-              <div className="space-y-2">
+            <SettingsToggleRow
+              label="Custom Filename Format"
+              desc={`Use a custom pattern instead of the default (${'{track}-{driver}-{counter}'})`}
+              value={cfg.useCustomFilename}
+              onChange={(v) => setCfg({ useCustomFilename: v })}
+            />
+            {cfg.useCustomFilename && (
+              <div className="space-y-2 pl-4 border-l border-surface/10">
+                <p className="text-xs text-muted/40">Click fields to add them to the format. Type separators (-, _ etc.) directly.</p>
                 <div className="flex gap-2">
                   <input value={cfg.filenameFormat} onChange={(e) => setCfg({ filenameFormat: e.target.value })}
                     className="flex-1 bg-surface/10 border border-surface/15 rounded-md px-3 h-9 text-xs font-mono text-muted/70 focus:outline-none focus:border-accent/40" />
@@ -481,7 +488,7 @@ function SettingsModal({ cfg, setCfg, onClose, pickFolder }: {
                   </div>
                 ))}
               </div>
-            </SettingsRow>
+            )}
 
             {/* Output format */}
             <SettingsRow label="Output Format">

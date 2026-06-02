@@ -476,8 +476,9 @@ function setupIpc() {
       })
 
       const ext = EXT[config.outputFormat] ?? '.jpg'
+      const format = config.useCustomFilename ? config.filenameFormat : '{track}-{driver}-{counter}'
       const outPath = resolveFilename(
-        config.filenameFormat,
+        format,
         iracing.sessionInfo,
         iracing.telemetry.Lap,
         iracing.telemetry.SessionNum,
