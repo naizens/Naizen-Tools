@@ -554,7 +554,7 @@ function createWindow() {
     width: state.width,
     height: state.height,
     ...(state.x !== -1 ? { x: state.x, y: state.y } : {}),
-    minWidth: 380,
+    minWidth: 800,
     minHeight: 500,
     frame: false,
     backgroundColor: '#07070f',
