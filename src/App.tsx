@@ -76,12 +76,19 @@ export default function App() {
       <TitleBar onPatchNotes={() => setPatchNotesOpen(true)} onSettings={() => setSettingsOpen(true)} />
       <UpdateBadge />
       <Navbar active={activeTool} onChange={setActiveTool} />
-      <main className="flex-1 overflow-y-auto px-4 pb-4 pt-4">
-        <Suspense fallback={<ToolFallback />}>
-          {activeTool === 'afk' && <AntiAfk />}
-          {activeTool === 'clicker' && <AutoClicker />}
-          {activeTool === 'autokey' && <AutoKey />}
-          {activeTool === 'game'       && <GameSettings />}
+      <main className={[
+        'flex-1 overflow-y-auto',
+        activeTool === 'screenshot' ? '' : 'px-4 pb-4 pt-4',
+      ].join(' ')}>
+        <Suspense fallback={<div className="px-4 pt-4"><ToolFallback /></div>}>
+          {activeTool !== 'screenshot' && (
+            <div className="max-w-lg mx-auto space-y-4">
+              {activeTool === 'afk'     && <AntiAfk />}
+              {activeTool === 'clicker' && <AutoClicker />}
+              {activeTool === 'autokey' && <AutoKey />}
+              {activeTool === 'game'    && <GameSettings />}
+            </div>
+          )}
           {activeTool === 'screenshot' && <IracingScreenshot />}
         </Suspense>
       </main>

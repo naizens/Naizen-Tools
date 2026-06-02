@@ -13,6 +13,20 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   {
+    version: '0.5.2',
+    date: 'June 2, 2026',
+    sections: [
+      {
+        label: 'New',
+        color: 'text-success',
+        items: [
+          'Screenshot layout — left sidebar with controls, large preview, horizontal thumbnail strip',
+          'Window size — default is now 1280 × 720',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.5.1',
     date: 'June 2, 2026',
     sections: [
