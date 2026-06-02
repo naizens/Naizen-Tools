@@ -65,6 +65,20 @@ contextBridge.exposeInMainWorld('api', {
   openScreenshot: (filePath: string) => ipcRenderer.send('screenshot:open', filePath),
   openScreenshotExternal: (filePath: string) => ipcRenderer.send('screenshot:openExternal', filePath),
   restoreIracingWindow: (bounds: { x: number; y: number; width: number; height: number }) => ipcRenderer.send('screenshot:restoreWindow', bounds),
+  appsLaunch: (app: unknown) => ipcRenderer.send('apps:launch', app),
+  appsKill: (id: string) => ipcRenderer.send('apps:kill', id),
+  appsLaunchAll: (apps: unknown[]) => ipcRenderer.send('apps:launchAll', apps),
+  appsRunning: () => ipcRenderer.invoke('apps:running') as Promise<string[]>,
+  appsPickExe: () => ipcRenderer.invoke('apps:pickExe') as Promise<string | null>,
+  onAppsStatus: (cb: (data: { id: string; running: boolean }) => void) => {
+    const handler = (_: Electron.IpcRendererEvent, data: unknown) => cb(data as { id: string; running: boolean })
+    ipcRenderer.on('apps:status', handler)
+    return () => ipcRenderer.off('apps:status', handler)
+  },
+  onAppsGetList: (cb: () => void) => {
+    ipcRenderer.on('apps:getList', cb)
+    return () => ipcRenderer.off('apps:getList', cb)
+  },
   pickScreenshotFolder: () => ipcRenderer.invoke('screenshot:pickFolder') as Promise<string | null>,
   defaultScreenshotFolder: () => ipcRenderer.invoke('screenshot:defaultFolder') as Promise<string>,
 })

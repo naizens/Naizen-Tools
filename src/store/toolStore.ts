@@ -1,6 +1,14 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+export interface IracingApp {
+  id: string
+  name: string
+  path: string
+  args: string
+  enabled: boolean
+}
+
 interface ToolConfig {
   afk: { sHold: number; intervalMs: number; windowTitle: string; hotkey: string | null; enterEnabled: boolean; enterIntervalMs: number }
   whold: Record<string, never>
@@ -43,6 +51,8 @@ interface ToolState {
   setCloseAction: (v: 'minimize' | 'quit') => void
   setAutostart: (v: boolean) => void
   setScreenshot: (cfg: Partial<ScreenshotConfig>) => void
+  iracingApps: IracingApp[]
+  setIracingApps: (apps: IracingApp[]) => void
   setConfig: <K extends keyof ToolConfig>(tool: K, cfg: Partial<ToolConfig[K]>) => void
   setRunning: (tool: keyof ToolConfig, running: boolean) => void
   setAfkTick: (remaining: number, presses: number) => void
@@ -91,6 +101,9 @@ export const useToolStore = create<ToolState>()(
 
       afkPresses: 0,
       afkRemaining: 0,
+
+      iracingApps: [],
+      setIracingApps: (iracingApps) => set({ iracingApps }),
 
       setTheme: (theme) => set({ theme }),
       setCloseAction: (closeAction) => set({ closeAction }),
@@ -147,6 +160,7 @@ export const useToolStore = create<ToolState>()(
         theme: s.theme,
         closeAction: s.closeAction,
         screenshot: s.screenshot,
+        iracingApps: s.iracingApps,
         config: s.config,
       }),
     },

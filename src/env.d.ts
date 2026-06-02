@@ -41,6 +41,13 @@ interface Window {
     openScreenshot: (filePath: string) => void
     openScreenshotExternal: (filePath: string) => void
     restoreIracingWindow: (bounds: { x: number; y: number; width: number; height: number }) => void
+    appsLaunch: (app: unknown) => void
+    appsKill: (id: string) => void
+    appsLaunchAll: (apps: unknown[]) => void
+    appsRunning: () => Promise<string[]>
+    appsPickExe: () => Promise<string | null>
+    onAppsStatus: (cb: (data: { id: string; running: boolean }) => void) => () => void
+    onAppsGetList: (cb: () => void) => () => void
     pickScreenshotFolder: () => Promise<string | null>
     defaultScreenshotFolder: () => Promise<string>
   }

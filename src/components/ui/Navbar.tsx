@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { useToolStore } from '@/store/toolStore'
 
-export type Tool = 'afk' | 'clicker' | 'autokey' | 'game' | 'screenshot'
+export type Tool = 'afk' | 'clicker' | 'autokey' | 'game' | 'screenshot' | 'iracing-apps'
 
 const MACROS_TOOLS: Tool[] = ['clicker', 'autokey']
 const IRACING_TOOLS: Tool[] = ['game', 'screenshot']
@@ -13,8 +13,9 @@ const MACROS_ITEMS: { id: Tool; label: string }[] = [
 ]
 
 const IRACING_ITEMS: { id: Tool; label: string }[] = [
-  { id: 'game',       label: 'Game Settings' },
-  { id: 'screenshot', label: 'Screenshot' },
+  { id: 'game',         label: 'Game Settings' },
+  { id: 'screenshot',   label: 'Screenshot' },
+  { id: 'iracing-apps', label: 'Apps' },
 ]
 
 const FLAT_TABS: { id: Tool; label: string }[] = [
