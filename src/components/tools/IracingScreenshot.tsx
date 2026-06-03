@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
-import { Camera, ChevronDown, ExternalLink, FolderOpen, RefreshCw, Settings, X } from 'lucide-react'
+import { Camera, ChevronDown, ExternalLink, FolderOpen, RefreshCw, Settings, Trash2, X } from 'lucide-react'
 import { useToolStore } from '@/store/toolStore'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -50,7 +50,7 @@ async function probeStreamDimensions(stream: MediaStream): Promise<{ w: number; 
   })
 }
 
-async function captureFrame(sourceId: string | null, width: number, height: number): Promise<Buffer> {
+async function captureFrame(sourceId: string | null, width: number, height: number): Promise<Uint8Array> {
   const DIM_TOL = 2, RETRY = 300, MAX = 8000
   let stream = await acquireStream(sourceId, width, height)
   let dims   = await probeStreamDimensions(stream)
@@ -69,12 +69,18 @@ async function captureFrame(sourceId: string | null, width: number, height: numb
   ctx.drawImage(v, 0, 0)
   stream.getTracks().forEach((t) => t.stop())
   const blob = await canvas.convertToBlob({ type: 'image/png' })
-  return Buffer.from(await blob.arrayBuffer())
+  return new Uint8Array(await blob.arrayBuffer())
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 interface GalleryEntry { path: string; name: string; thumb: string | null; mtime: number }
+
+function fmtMtime(ms: number) {
+  const d = new Date(ms)
+  return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+    + ' ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+}
 
 
 export default memo(function IracingScreenshot() {
@@ -87,6 +93,7 @@ export default memo(function IracingScreenshot() {
   const [gallery, setGallery]       = useState<GalleryEntry[]>([])
   const [selected, setSelected]     = useState<GalleryEntry | null>(null)
   const [error, setError]           = useState<string | null>(null)
+  const [imgDims, setImgDims]       = useState<{ w: number; h: number } | null>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [resOpen, setResOpen]       = useState(false)
   const [fmtOpen, setFmtOpen]       = useState(false)
@@ -109,7 +116,7 @@ export default memo(function IracingScreenshot() {
     const u2 = window.api.onIracingDisconnected(() => setConnected(false))
     const u3 = window.api.onScreenshotCapture(async ({ sourceId, width, height }) => {
       try { window.api.submitScreenshotBuffer(await captureFrame(sourceId, width, height)) }
-      catch { window.api.submitScreenshotBuffer(Buffer.alloc(0)) }
+      catch { window.api.submitScreenshotBuffer(new Uint8Array(0)) }
     })
     const u4 = window.api.onScreenshotHotkey(() => { if (!taking) void take() })
     return () => { u1(); u2(); u3(); u4() }
@@ -290,16 +297,25 @@ export default memo(function IracingScreenshot() {
       {/* ── Preview + gallery ────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col overflow-hidden">
           {/* Preview */}
-          <div className="flex-1 bg-black/30 flex items-center justify-center overflow-hidden relative">
+          <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden relative">
             {preview || selected?.thumb ? (
               <>
                 <img
                   src={preview ?? selected?.thumb ?? ''}
                   alt="preview"
-                  className="max-w-full max-h-full object-contain"
+                  className="w-full h-full object-contain"
+                  onLoad={(e) => {
+                    const img = e.currentTarget
+                    setImgDims({ w: img.naturalWidth, h: img.naturalHeight })
+                  }}
                 />
                 {selected && (
                   <div className="absolute top-3 right-3 flex items-center gap-2">
+                    {imgDims && (
+                      <span className="px-3 py-1.5 rounded-md bg-black/60 text-xs font-mono text-white/50 tabular-nums">
+                        {imgDims.w} × {imgDims.h}
+                      </span>
+                    )}
                     <button
                       onClick={() => window.api.openScreenshotExternal(selected.path)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-black/60 hover:bg-black/80 text-xs font-mono text-white/70 hover:text-white transition-colors"
@@ -337,22 +353,42 @@ export default memo(function IracingScreenshot() {
               <RefreshCw size={14} />
             </button>
             {gallery.map((entry) => (
-              <button
-                key={entry.path}
-                onClick={() => { setSelected(entry); setPreview(entry.thumb) }}
-                className={[
-                  'shrink-0 h-20 w-36 rounded-md overflow-hidden border-2 transition-all',
-                  selected?.path === entry.path ? 'border-accent' : 'border-surface/15 hover:border-surface/40',
-                ].join(' ')}
-              >
-                {entry.thumb ? (
-                  <img src={entry.thumb ?? ''} alt={entry.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-surface/10 flex items-center justify-center">
-                    <Camera size={14} className="text-muted/20" />
-                  </div>
-                )}
-              </button>
+              <div key={entry.path} className="relative group shrink-0 h-20 w-36">
+                <button
+                  onClick={() => { setSelected(entry); setPreview('app-file:///' + entry.path.replace(/\\/g, '/')); setImgDims(null) }}
+                  className={[
+                    'w-full h-full rounded-md overflow-hidden border-2 transition-all',
+                    selected?.path === entry.path ? 'border-accent' : 'border-surface/15 group-hover:border-surface/40',
+                  ].join(' ')}
+                >
+                  {entry.thumb ? (
+                    <img src={entry.thumb} alt={entry.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-surface/10 flex items-center justify-center">
+                      <Camera size={14} className="text-muted/20" />
+                    </div>
+                  )}
+                </button>
+
+                {/* Date overlay */}
+                <div className="absolute bottom-0 left-0 right-0 px-1.5 py-0.5 rounded-b-md bg-black/70 text-[10px] font-mono text-white/50 text-center pointer-events-none">
+                  {fmtMtime(entry.mtime)}
+                </div>
+
+                {/* Delete button */}
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation()
+                    await window.api.deleteScreenshot(entry.path)
+                    if (selected?.path === entry.path) { setSelected(null); setPreview(null); setImgDims(null) }
+                    loadGallery()
+                  }}
+                  className="absolute top-1 right-1 w-5 h-5 rounded bg-black/60 flex items-center justify-center text-white/40 hover:text-warn hover:bg-black/80 opacity-0 group-hover:opacity-100 transition-all"
+                  title="Delete"
+                >
+                  <Trash2 size={10} />
+                </button>
+              </div>
             ))}
           </div>
         </div>
@@ -440,6 +476,10 @@ function SettingsModal({ cfg, setCfg, onClose, pickFolder }: {
                 <button onClick={pickFolder}
                   className="px-4 h-9 rounded-md bg-warn text-white text-xs font-semibold hover:bg-warn/80 transition-colors shrink-0">
                   Select Folder
+                </button>
+                <button onClick={async () => setCfg({ folder: await window.api.defaultScreenshotFolder() })}
+                  className="px-3 h-9 rounded-md border border-surface/15 text-xs font-mono text-muted/50 hover:text-muted/80 hover:bg-surface/10 transition-colors shrink-0">
+                  Reset
                 </button>
               </div>
             </SettingsRow>

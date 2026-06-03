@@ -13,6 +13,57 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   {
+    version: '0.9.0',
+    date: 'June 3, 2026',
+    sections: [
+      {
+        label: 'New',
+        color: 'text-success',
+        items: [
+          'Monitor Tool — change resolution and refresh rate per monitor from within the app',
+          'Monitor Map — visual layout showing relative monitor positions, click to select',
+          'Presets — one-click Desktop (2560×1440) and iRacing (1920×1080) modes for all monitors, with active indicator',
+          'App Icon — new custom icon across the app, titlebar, tray, and installer',
+        ],
+      },
+      {
+        label: 'Improved',
+        color: 'text-accent',
+        items: [
+          'Config Editor — line numbers with pixel-perfect alignment',
+          'Config Editor — search highlighting shows all matches, active match in accent color',
+          'Config Profiles — edit and delete buttons always visible in profile list',
+          'Screenshot Gallery — delete screenshots directly from the gallery',
+          'Screenshot Gallery — date and time shown on each thumbnail',
+          'Screenshot Preview — loads full-resolution image, resolution badge top-right',
+          'Screenshot Preview — scales correctly on maximized windows',
+        ],
+      },
+      {
+        label: 'Fixed',
+        color: 'text-warn',
+        items: [
+          '8K Screenshot — crop no longer crashes when capture resolution is lower than target',
+        ],
+      },
+    ],
+  },
+  {
+    version: '0.8.0',
+    date: 'June 2, 2026',
+    sections: [
+      {
+        label: 'New',
+        color: 'text-success',
+        items: [
+          'Config Profiles — save sets of iRacing .ini files (app.ini, rendererDX11.ini, …) and switch them all at once',
+          'Save current — snapshot the live config, pick which files to include',
+          'Apply — restore a saved profile over the live config with one click',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.7.0',
     date: 'June 2, 2026',
     sections: [

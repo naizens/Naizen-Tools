@@ -1,4 +1,5 @@
 import { Minus, Settings, Square, X } from 'lucide-react'
+import iconSrc from '../../../assets/icon.png'
 
 interface Props {
   onPatchNotes: () => void
@@ -9,7 +10,8 @@ export default function TitleBar({ onPatchNotes, onSettings }: Props) {
 
   return (
     <div className="drag flex items-center justify-between h-10 px-4 shrink-0 border-b border-surface/10">
-      <div className="no-drag flex items-baseline gap-2">
+      <div className="no-drag flex items-center gap-2">
+        <img src={iconSrc} alt="icon" className="w-5 h-5 rounded-sm" />
         <span className="text-xs font-mono font-semibold text-muted/40 tracking-widest uppercase">
           Naizen Tools
         </span>

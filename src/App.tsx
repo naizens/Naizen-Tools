@@ -11,6 +11,8 @@ const AutoKey      = React.lazy(() => import('./components/tools/AutoKey'))
 const GameSettings       = React.lazy(() => import('./components/tools/GameSettings'))
 const IracingScreenshot  = React.lazy(() => import('./components/tools/IracingScreenshot'))
 const IracingApps        = React.lazy(() => import('./components/tools/IracingApps'))
+const IniConfig          = React.lazy(() => import('./components/tools/IniConfig'))
+const MonitorTool        = React.lazy(() => import('./components/tools/MonitorTool'))
 const PatchNotes   = React.lazy(() => import('./components/tools/PatchNotes'))
 const Settings     = React.lazy(() => import('./components/tools/Settings'))
 
@@ -107,8 +109,10 @@ export default function App() {
               {activeTool === 'game'    && <GameSettings />}
             </div>
           )}
-          {activeTool === 'screenshot'   && <IracingScreenshot />}
-          {activeTool === 'iracing-apps' && <IracingApps />}
+          {activeTool === 'screenshot'      && <IracingScreenshot />}
+          {activeTool === 'iracing-apps'    && <IracingApps />}
+          {activeTool === 'iracing-ini'     && <IniConfig />}
+          {activeTool === 'iracing-monitor' && <MonitorTool />}
         </Suspense>
       </main>
       {patchNotesOpen && (

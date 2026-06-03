@@ -85,6 +85,12 @@ interface ToolState {
   setProfiles: (profiles: IracingProfile[]) => void
   setActiveProfile: (id: string) => void
   setProfileApps: (profileId: string, apps: IracingApp[]) => void
+  iniFolder: string
+  setIniFolder: (folder: string) => void
+  iniActiveProfileId: string
+  setIniActiveProfile: (id: string) => void
+  iniManagedFiles: string[]
+  setIniManagedFiles: (files: string[]) => void
   setConfig: <K extends keyof ToolConfig>(tool: K, cfg: Partial<ToolConfig[K]>) => void
   setRunning: (tool: keyof ToolConfig, running: boolean) => void
   setAfkTick: (remaining: number, presses: number) => void
@@ -144,6 +150,13 @@ export const useToolStore = create<ToolState>()(
             p.id === profileId ? { ...p, apps } : p,
           ),
         })),
+
+      iniFolder: '',
+      setIniFolder: (iniFolder) => set({ iniFolder }),
+      iniActiveProfileId: '',
+      setIniActiveProfile: (iniActiveProfileId) => set({ iniActiveProfileId }),
+      iniManagedFiles: ['app.ini', 'rendererDX11Monitor.ini'],
+      setIniManagedFiles: (iniManagedFiles) => set({ iniManagedFiles }),
 
       setTheme: (theme) => set({ theme }),
       setCloseAction: (closeAction) => set({ closeAction }),
@@ -217,6 +230,9 @@ export const useToolStore = create<ToolState>()(
         screenshot: s.screenshot,
         iracingProfiles: s.iracingProfiles,
         activeProfileId: s.activeProfileId,
+        iniFolder: s.iniFolder,
+        iniActiveProfileId: s.iniActiveProfileId,
+        iniManagedFiles: s.iniManagedFiles,
         config: s.config,
       }),
     },

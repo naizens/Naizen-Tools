@@ -32,13 +32,14 @@ interface Window {
     onIracingConnected: (cb: () => void) => () => void
     onIracingDisconnected: (cb: () => void) => () => void
     takeScreenshot: (config: unknown) => Promise<{ path: string; thumb: string | null }>
-    submitScreenshotBuffer: (buf: Buffer) => void
+    submitScreenshotBuffer: (buf: Uint8Array) => void
     onScreenshotCapture: (cb: (data: { sourceId: string | null; width: number; height: number }) => void) => () => void
     onScreenshotHotkey: (cb: () => void) => () => void
     setScreenshotHotkey: (hotkey: string) => void
     clearScreenshotHotkey: () => void
     listScreenshots: (folder: string) => Promise<{ path: string; name: string; thumb: string | null; mtime: number }[]>
     openScreenshot: (filePath: string) => void
+    deleteScreenshot: (filePath: string) => Promise<boolean>
     openScreenshotExternal: (filePath: string) => void
     restoreIracingWindow: (bounds: { x: number; y: number; width: number; height: number }) => void
     appsLaunch: (id: string) => void
@@ -52,5 +53,22 @@ interface Window {
     onAppsError: (cb: (data: { id: string; message: string }) => void) => () => void
     pickScreenshotFolder: () => Promise<string | null>
     defaultScreenshotFolder: () => Promise<string>
+    iniDetectFolder: () => Promise<string>
+    iniListFiles: (folder: string) => Promise<string[]>
+    iniMtimes: (folder: string) => Promise<Record<string, number>>
+    iniReadFile: (folder: string, file: string) => Promise<string>
+    iniWriteFile: (folder: string, file: string, content: string) => Promise<boolean>
+    iniDeleteFile: (folder: string, file: string) => Promise<boolean>
+    iniMigrate: (folder: string) => Promise<void>
+    iniListProfiles: () => Promise<{ id: string; name: string; slug: string; files: string[]; savedAt: number }[]>
+    iniCreate: (opts: { name: string; folder: string; managedFiles: string[] }) => Promise<{ id: string; name: string; slug: string; files: string[]; savedAt: number }>
+    iniUpdate: (id: string, folder: string, managedFiles: string[]) => Promise<{ updated: string[] }>
+    iniApply: (id: string, folder: string) => Promise<{ applied: string[]; failed: string[] }>
+    iniCompare: (id: string, folder: string) => Promise<{ changed: string[] }>
+    iniDelete: (id: string) => Promise<void>
+    iniRename: (id: string, name: string) => Promise<void>
+    iniPickFolder: () => Promise<string | null>
+    monitorList: () => Promise<{ name: string; label: string; x: number; y: number; width: number; height: number; hz: number; modes: { width: number; height: number; hz: number }[] }[]>
+    monitorSetResolution: (deviceName: string, width: number, height: number, hz: number) => Promise<number>
   }
 }

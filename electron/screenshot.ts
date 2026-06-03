@@ -200,10 +200,10 @@ export async function processImage(
   const srcH = meta.height ?? targetHeight
 
   if (crop) {
-    const x = cropTopLeft ? 0 : Math.round((srcW - targetWidth) / 2)
-    const y = cropTopLeft ? 0 : Math.round((srcH - targetHeight) / 2)
-    const w = Math.min(targetWidth, srcW - x)
-    const h = Math.min(targetHeight, srcH - y)
+    const x = Math.max(0, cropTopLeft ? 0 : Math.round((srcW - targetWidth) / 2))
+    const y = Math.max(0, cropTopLeft ? 0 : Math.round((srcH - targetHeight) / 2))
+    const w = Math.max(1, Math.min(targetWidth, srcW - x))
+    const h = Math.max(1, Math.min(targetHeight, srcH - y))
     await image.extract({ left: x, top: y, width: w, height: h }).toFile(outputPath)
   } else {
     await image.toFile(outputPath)
@@ -221,8 +221,8 @@ export async function makeThumbnail(sourcePath: string): Promise<string> {
 
   sharp.cache(false)
   await sharp(sourcePath)
-    .resize(1280, 720, { fit: 'inside', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .webp({ quality: 80 })
+    .resize(1920, 1080, { fit: 'inside', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .webp({ quality: 90 })
     .toFile(thumbPath)
 
   return `data:image/webp;base64,${readFileSync(thumbPath).toString('base64')}`
