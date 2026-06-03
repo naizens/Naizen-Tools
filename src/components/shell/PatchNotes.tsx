@@ -14,6 +14,19 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   {
+    version: '0.10.0',
+    date: 'June 3, 2026',
+    sections: [
+      {
+        label: 'Removed',
+        color: 'text-warn',
+        items: [
+          'Game Settings — tool was unused and has been removed',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.9.0',
     date: 'June 3, 2026',
     sections: [
