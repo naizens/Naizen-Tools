@@ -11,6 +11,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"electron/**/*.ts\"",
     "dist": "npm run build && electron-builder",
     "dist:analyze": "electron-builder --analyze",
+    "release": "set ELECTRON_RUN_AS_NODE=&& release-it --ci",
     "postinstall": "electron-rebuild"
   },
   "keywords": [],
