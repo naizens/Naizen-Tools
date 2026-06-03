@@ -1,9 +1,10 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, protocol, screen, Tray, shell, globalShortcut } from 'electron'
 import { join } from 'path'
-import { existsSync, readFileSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from 'fs'
 import { spawn } from 'child_process'
 import { autoUpdater } from 'electron-updater'
 import { IracingBridge } from './iracing'
+import * as iniProfiles from './iniProfiles'
 import {
   getIracingWindow,
   resizeWindow,
@@ -157,6 +158,131 @@ function killAllApps() {
   for (const a of watchedApps) killApp(a.id)
 }
 
+// ─── Monitor Resolution ───────────────────────────────────────────────────────
+
+// ─── Monitor Resolution (koffi + user32.dll, Buffer-based) ───────────────────
+
+// sizeof(DISPLAY_DEVICEW) = 840, sizeof(DEVMODEW) = 220
+const _DD_SIZE = 840
+const _DM_SIZE = 220
+
+// DISPLAY_DEVICEW field offsets
+const _DD_CB    = 0    // uint32
+const _DD_NAME  = 4    // wchar[32]  = 64 bytes
+const _DD_STR   = 68   // wchar[128] = 256 bytes
+const _DD_FLAGS = 324  // uint32
+
+// DEVMODEW field offsets
+const _DM_SIZE_F = 68   // uint16  (dmSize)
+const _DM_FIELDS = 72   // uint32  (dmFields)
+const _DM_POSX   = 76   // int32   (dmPosition.x)
+const _DM_POSY   = 80   // int32   (dmPosition.y)
+const _DM_PELW   = 172  // uint32  (dmPelsWidth)
+const _DM_PELH   = 176  // uint32  (dmPelsHeight)
+const _DM_FREQ   = 184  // uint32  (dmDisplayFrequency)
+
+let _monitorApiReady = false
+let _enumDisplayDevicesW: ((dev: string | null, n: number, buf: Buffer, flags: number) => boolean) | null = null
+let _enumDisplaySettingsW: ((dev: string, n: number, buf: Buffer) => boolean) | null = null
+let _changeDisplaySettingsExW: ((dev: string, buf: Buffer, hwnd: number, flags: number, lp: number) => number) | null = null
+
+function readWStr(buf: Buffer, offset: number, maxChars: number): string {
+  let s = ''
+  for (let i = 0; i < maxChars; i++) {
+    const c = buf.readUInt16LE(offset + i * 2)
+    if (c === 0) break
+    s += String.fromCharCode(c)
+  }
+  return s
+}
+
+function loadMonitorApi() {
+  if (_monitorApiReady) return
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const koffi = require('koffi') as typeof import('koffi')
+  const u32 = koffi.load('user32.dll')
+  _enumDisplayDevicesW    = u32.func('bool   __stdcall EnumDisplayDevicesW(str16 lpDevice, uint32 iDevNum, void *lpdd, uint32 dwFlags)') as typeof _enumDisplayDevicesW
+  _enumDisplaySettingsW   = u32.func('bool   __stdcall EnumDisplaySettingsW(str16 deviceName, uint32 iModeNum, void *lpDevMode)') as typeof _enumDisplaySettingsW
+  _changeDisplaySettingsExW = u32.func('int32 __stdcall ChangeDisplaySettingsExW(str16 lpDevice, void *lpDevMode, intptr hwnd, uint32 dwflags, intptr lParam)') as typeof _changeDisplaySettingsExW
+  _monitorApiReady = true
+}
+
+function monitorList(): Promise<{ name: string; label: string; modes: { width: number; height: number; hz: number }[] }[]> {
+  return new Promise((resolve) => {
+    try {
+      loadMonitorApi()
+      const result: { name: string; label: string; modes: { width: number; height: number; hz: number }[] }[] = []
+
+      for (let i = 0; ; i++) {
+        const dd = Buffer.alloc(_DD_SIZE, 0)
+        dd.writeUInt32LE(_DD_SIZE, _DD_CB)
+        if (!_enumDisplayDevicesW!(null, i, dd, 0)) break
+        if (!(dd.readUInt32LE(_DD_FLAGS) & 1)) continue  // DISPLAY_DEVICE_ACTIVE
+
+        const name = readWStr(dd, _DD_NAME, 32)
+
+        // Second call with adapter name → gets attached monitor's friendly name
+        let label = readWStr(dd, _DD_STR, 128)
+        const mon = Buffer.alloc(_DD_SIZE, 0)
+        mon.writeUInt32LE(_DD_SIZE, _DD_CB)
+        if (_enumDisplayDevicesW!(name, 0, mon, 0)) {
+          const monLabel = readWStr(mon, _DD_STR, 128)
+          if (monLabel) label = monLabel
+        }
+
+        const modes: { width: number; height: number; hz: number }[] = []
+        const seen = new Set<string>()
+
+        for (let j = 0; ; j++) {
+          const dm = Buffer.alloc(_DM_SIZE, 0)
+          dm.writeUInt16LE(_DM_SIZE, _DM_SIZE_F)
+          if (!_enumDisplaySettingsW!(name, j, dm)) break
+          const w  = dm.readUInt32LE(_DM_PELW)
+          const h  = dm.readUInt32LE(_DM_PELH)
+          const hz = dm.readUInt32LE(_DM_FREQ)
+          const key = `${w}x${h}x${hz}`
+          if (w > 0 && !seen.has(key)) { seen.add(key); modes.push({ width: w, height: h, hz }) }
+        }
+
+        // Fetch current position + resolution (ENUM_CURRENT_SETTINGS = 0xFFFFFFFF)
+        const cur = Buffer.alloc(_DM_SIZE, 0)
+        cur.writeUInt16LE(_DM_SIZE, _DM_SIZE_F)
+        let cx = 0, cy = 0, cw = 0, ch = 0
+        let chz = 0
+        if (_enumDisplaySettingsW!(name, 0xFFFFFFFF, cur)) {
+          cx  = cur.readInt32LE(_DM_POSX)
+          cy  = cur.readInt32LE(_DM_POSY)
+          cw  = cur.readUInt32LE(_DM_PELW)
+          ch  = cur.readUInt32LE(_DM_PELH)
+          chz = cur.readUInt32LE(_DM_FREQ)
+        }
+
+        result.push({ name, label, x: cx, y: cy, width: cw, height: ch, hz: chz, modes })
+      }
+      resolve(result)
+    } catch (e) {
+      console.error('[monitor] list error:', e)
+      resolve([])
+    }
+  })
+}
+
+async function setMonitorResolution(deviceName: string, width: number, height: number, hz: number): Promise<number> {
+  try {
+    loadMonitorApi()
+    const dm = Buffer.alloc(_DM_SIZE, 0)
+    dm.writeUInt16LE(_DM_SIZE, _DM_SIZE_F)
+    dm.writeUInt32LE(0x80000 | 0x100000 | 0x400000, _DM_FIELDS)  // DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY
+    dm.writeUInt32LE(width,  _DM_PELW)
+    dm.writeUInt32LE(height, _DM_PELH)
+    dm.writeUInt32LE(hz,     _DM_FREQ)
+    return _changeDisplaySettingsExW!(deviceName, dm, 0, 0, 0)
+  } catch (e) {
+    console.error('[monitor] setResolution error:', e)
+    return -1
+  }
+}
+
 // ─── Window State ─────────────────────────────────────────────────────────────
 
 interface WinState { width: number; height: number; x: number; y: number; maximized: boolean }
@@ -195,7 +321,6 @@ const stopFlags: Record<string, boolean> = {
   whold: true,
   clicker: true,
   autokey: true,
-  game: true,
 }
 
 let nutKeyboard: typeof import('@nut-tree-fork/nut-js').keyboard | null = null
@@ -461,20 +586,6 @@ function setupIpc() {
       clickerLoop(config['button'] as 'left' | 'right' | 'middle', config['intervalMs'] as number)
     } else if (tool === 'autokey') {
       autokeyLoop(config['key'] as string, config['downMs'] as number, config['upMs'] as number)
-    } else if (tool === 'game') {
-      const windowTitle = (config['windowTitle'] as string) ?? ''
-      const fgFps       = (config['fgFps'] as number) ?? 0
-      const bgFps       = (config['bgFps'] as number) ?? 0
-      loadAntiPauseDll()
-      fnSetFps!(fgFps, bgFps)
-      if (windowTitle) {
-        await loadWindowUtils()
-        const target = winManager!.windowManager.getWindows().find((w) => {
-          try { return w.getTitle().toLowerCase().includes(windowTitle.toLowerCase()) }
-          catch { return false }
-        })
-        if (target) startKeepFocus(target.handle as number)
-      }
     }
 
     win?.webContents.send('tool:status', { tool, running: true })
@@ -482,10 +593,6 @@ function setupIpc() {
 
   ipcMain.handle('tool:stop', async (_, { tool }: { tool: string }) => {
     stopFlags[tool] = true
-    if (tool === 'game') {
-      stopKeepFocus()
-      if (fnSetFps) fnSetFps(0, 0)
-    }
     if (tool === 'afk' && afkTickTimer) {
       clearTimeout(afkTickTimer)
       afkTickTimer = null
@@ -498,11 +605,6 @@ function setupIpc() {
 
   ipcMain.handle('hotkey:set',   (_, { tool, raw }: { tool: string; raw: string }) => registerHotkey(tool, raw))
   ipcMain.handle('hotkey:clear', (_, { tool }: { tool: string })                   => unregisterHotkey(tool))
-
-  ipcMain.handle('game:setFps', (_, { fg, bg }: { fg: number; bg: number }) => {
-    loadAntiPauseDll()
-    fnSetFps!(fg, bg)
-  })
 
   ipcMain.handle('capture:start', async (_, { type }: { type: 'keyboard' | 'mouse' }) => {
     await loadUiohook()
@@ -556,6 +658,8 @@ function setupIpc() {
   ipcMain.on('window:minimize', () => win?.minimize())
   ipcMain.on('window:maximize', () => (win?.isMaximized() ? win.unmaximize() : win?.maximize()))
   ipcMain.on('window:close', () => closeAction === 'quit' ? app.exit() : win?.hide())
+  ipcMain.on('window:hide', () => win?.hide())
+  ipcMain.on('window:quit', () => { saveWinState(); app.exit() })
   ipcMain.on('update:install', () => autoUpdater.quitAndInstall())
   ipcMain.on('close-action:set', (_, action: 'minimize' | 'quit') => { closeAction = action })
 
@@ -628,9 +732,10 @@ function setupIpc() {
     }
   })
 
-  ipcMain.on('screenshot:buffer', (_, buf: Buffer) => {
+  ipcMain.on('screenshot:buffer', (_, buf: Uint8Array) => {
     if (pendingCapture) {
-      pendingCapture.resolve(buf)
+      if (!buf || buf.length === 0) pendingCapture.reject(new Error('Capture failed in renderer'))
+      else pendingCapture.resolve(Buffer.from(buf))
       pendingCapture = null
     }
   })
@@ -644,12 +749,25 @@ function setupIpc() {
   })
 
   ipcMain.handle('screenshot:defaultFolder', () => {
-    const { homedir } = require('os') as typeof import('os')
-    return join(homedir(), 'Pictures', 'Screenshots')
+    const folder = join(app.getPath('pictures'), 'iRacing')
+    if (!existsSync(folder)) mkdirSync(folder, { recursive: true })
+    return folder
   })
 
   ipcMain.handle('screenshot:list', async (_, folder: string) => {
     return listScreenshots(folder)
+  })
+
+  ipcMain.handle('screenshot:delete', (_, filePath: string) => {
+    try {
+      if (existsSync(filePath)) unlinkSync(filePath)
+      const ext      = filePath.slice(filePath.lastIndexOf('.'))
+      const name     = filePath.slice(filePath.lastIndexOf(/[\\/]/.test(filePath) ? filePath.lastIndexOf('\\') : filePath.lastIndexOf('/')) + 1)
+      const thumbDir = join(app.getPath('userData'), 'ScreenshotCache')
+      const thumb    = join(thumbDir, name.replace(ext, '.webp'))
+      if (existsSync(thumb)) unlinkSync(thumb)
+      return true
+    } catch { return false }
   })
 
   ipcMain.on('screenshot:open', (_, filePath: string) => {
@@ -668,6 +786,29 @@ function setupIpc() {
       const buf: Buffer = extractFileIcon(exePath, 32)
       return buf && buf.length > 0 ? buf.toString('base64') : null
     } catch { return null }
+  })
+
+  // ── INI Profiles ──────────────────────────────────────────────────────────
+  ipcMain.handle('ini:detectFolder', () => iniProfiles.detectIracingFolder())
+  ipcMain.handle('ini:listFiles', (_, folder: string) => iniProfiles.listConfigFiles(folder))
+  ipcMain.handle('ini:mtimes', (_, folder: string) => iniProfiles.fileMtimes(folder))
+  ipcMain.handle('ini:readFile', (_, { folder, file }: { folder: string; file: string }) => iniProfiles.readConfigFile(folder, file))
+  ipcMain.handle('ini:writeFile', (_, { folder, file, content }: { folder: string; file: string; content: string }) => iniProfiles.writeConfigFile(folder, file, content))
+  ipcMain.handle('ini:deleteFile', (_, { folder, file }: { folder: string; file: string }) => iniProfiles.deleteConfigFile(folder, file))
+  ipcMain.handle('ini:migrate', (_, folder: string) => iniProfiles.migrateProfiles(folder))
+  ipcMain.handle('ini:listProfiles', () => iniProfiles.listProfiles())
+  ipcMain.handle('ini:create', (_, opts: { name: string; folder: string; managedFiles: string[] }) => iniProfiles.createProfile(opts))
+  ipcMain.handle('ini:update', (_, { id, folder, managedFiles }: { id: string; folder: string; managedFiles: string[] }) => iniProfiles.updateProfile(id, folder, managedFiles))
+  ipcMain.handle('ini:apply', (_, { id, folder }: { id: string; folder: string }) => iniProfiles.applyProfile(id, folder))
+  ipcMain.handle('ini:delete', (_, id: string) => iniProfiles.deleteProfile(id))
+  ipcMain.handle('ini:rename', (_, { id, name }: { id: string; name: string }) => iniProfiles.renameProfile(id, name))
+  ipcMain.handle('ini:compare', (_, { id, folder }: { id: string; folder: string }) => iniProfiles.compareProfile(id, folder))
+  ipcMain.handle('ini:pickFolder', async () => {
+    const result = await dialog.showOpenDialog(win!, {
+      title: 'Select iRacing Config Folder',
+      properties: ['openDirectory'],
+    })
+    return result.canceled ? null : result.filePaths[0]
   })
 
   ipcMain.on('apps:launch', (_, id: string) => {
@@ -691,6 +832,12 @@ function setupIpc() {
     })
     return result.canceled ? null : result.filePaths[0]
   })
+
+  // ── Monitor Resolution ────────────────────────────────────────────────────
+  ipcMain.handle('monitor:list', () => monitorList())
+  ipcMain.handle('monitor:setResolution', (_, { deviceName, width, height, hz }: { deviceName: string; width: number; height: number; hz: number }) =>
+    setMonitorResolution(deviceName, width, height, hz)
+  )
 
   ipcMain.on('screenshot:restoreWindow', (_, bounds: { x: number; y: number; width: number; height: number }) => {
     const win = getIracingWindow()
@@ -792,7 +939,16 @@ function createTray() {
 
 // ─── App-Lifecycle ───────────────────────────────────────────────────────────
 
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'app-file', privileges: { bypassCSP: true, stream: true, supportFetchAPI: true } },
+])
+
 app.whenReady().then(() => {
+  protocol.registerFileProtocol('app-file', (request, callback) => {
+    const path = decodeURIComponent(request.url.slice('app-file:///'.length))
+    callback({ path })
+  })
+
   setupIpc()
   createWindow()
   createTray()

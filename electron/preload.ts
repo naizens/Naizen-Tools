@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('api', {
   windowMinimize: () => ipcRenderer.send('window:minimize'),
   windowMaximize: () => ipcRenderer.send('window:maximize'),
   windowClose: () => ipcRenderer.send('window:close'),
+  windowHide: () => ipcRenderer.send('window:hide'),
+  windowQuit: () => ipcRenderer.send('window:quit'),
   onUpdateDownloaded: (cb: () => void) => {
     const handler = () => cb()
     ipcRenderer.on('update:downloaded', handler)
@@ -49,7 +51,7 @@ contextBridge.exposeInMainWorld('api', {
 
   // Screenshot
   takeScreenshot: (config: unknown) => ipcRenderer.invoke('screenshot:take', config) as Promise<{ path: string; thumb: string | null }>,
-  submitScreenshotBuffer: (buf: Buffer) => ipcRenderer.send('screenshot:buffer', buf),
+  submitScreenshotBuffer: (buf: Uint8Array) => ipcRenderer.send('screenshot:buffer', buf),
   onScreenshotCapture: (cb: (data: { sourceId: string | null; width: number; height: number }) => void) => {
     const handler = (_: Electron.IpcRendererEvent, data: unknown) => cb(data as { sourceId: string | null; width: number; height: number })
     ipcRenderer.on('screenshot:capture', handler)
@@ -63,6 +65,7 @@ contextBridge.exposeInMainWorld('api', {
   clearScreenshotHotkey: () => ipcRenderer.send('screenshot:hotkey:clear'),
   listScreenshots: (folder: string) => ipcRenderer.invoke('screenshot:list', folder),
   openScreenshot: (filePath: string) => ipcRenderer.send('screenshot:open', filePath),
+  deleteScreenshot: (filePath: string) => ipcRenderer.invoke('screenshot:delete', filePath) as Promise<boolean>,
   openScreenshotExternal: (filePath: string) => ipcRenderer.send('screenshot:openExternal', filePath),
   restoreIracingWindow: (bounds: { x: number; y: number; width: number; height: number }) => ipcRenderer.send('screenshot:restoreWindow', bounds),
   appsLaunch: (id: string) => ipcRenderer.send('apps:launch', id),
@@ -84,4 +87,26 @@ contextBridge.exposeInMainWorld('api', {
   },
   pickScreenshotFolder: () => ipcRenderer.invoke('screenshot:pickFolder') as Promise<string | null>,
   defaultScreenshotFolder: () => ipcRenderer.invoke('screenshot:defaultFolder') as Promise<string>,
+
+  // INI profiles
+  iniDetectFolder: () => ipcRenderer.invoke('ini:detectFolder') as Promise<string>,
+  iniListFiles: (folder: string) => ipcRenderer.invoke('ini:listFiles', folder) as Promise<string[]>,
+  iniMtimes: (folder: string) => ipcRenderer.invoke('ini:mtimes', folder) as Promise<Record<string, number>>,
+  iniReadFile: (folder: string, file: string) => ipcRenderer.invoke('ini:readFile', { folder, file }) as Promise<string>,
+  iniWriteFile: (folder: string, file: string, content: string) => ipcRenderer.invoke('ini:writeFile', { folder, file, content }) as Promise<boolean>,
+  iniDeleteFile: (folder: string, file: string) => ipcRenderer.invoke('ini:deleteFile', { folder, file }) as Promise<boolean>,
+  iniMigrate: (folder: string) => ipcRenderer.invoke('ini:migrate', folder) as Promise<void>,
+  iniListProfiles: () => ipcRenderer.invoke('ini:listProfiles') as Promise<{ id: string; name: string; slug: string; files: string[]; savedAt: number }[]>,
+  iniCreate: (opts: { name: string; folder: string; managedFiles: string[] }) => ipcRenderer.invoke('ini:create', opts) as Promise<{ id: string; name: string; slug: string; files: string[]; savedAt: number }>,
+  iniUpdate: (id: string, folder: string, managedFiles: string[]) => ipcRenderer.invoke('ini:update', { id, folder, managedFiles }) as Promise<{ updated: string[] }>,
+  iniApply: (id: string, folder: string) => ipcRenderer.invoke('ini:apply', { id, folder }) as Promise<{ applied: string[]; failed: string[] }>,
+  iniCompare: (id: string, folder: string) => ipcRenderer.invoke('ini:compare', { id, folder }) as Promise<{ changed: string[] }>,
+  iniDelete: (id: string) => ipcRenderer.invoke('ini:delete', id) as Promise<void>,
+  iniRename: (id: string, name: string) => ipcRenderer.invoke('ini:rename', { id, name }) as Promise<void>,
+  iniPickFolder: () => ipcRenderer.invoke('ini:pickFolder') as Promise<string | null>,
+
+  // Monitor resolution
+  monitorList: () => ipcRenderer.invoke('monitor:list') as Promise<{ name: string; label: string; x: number; y: number; width: number; height: number; hz: number; modes: { width: number; height: number; hz: number }[] }[]>,
+  monitorSetResolution: (deviceName: string, width: number, height: number, hz: number) =>
+    ipcRenderer.invoke('monitor:setResolution', { deviceName, width, height, hz }) as Promise<number>,
 })

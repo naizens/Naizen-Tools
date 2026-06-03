@@ -86,59 +86,57 @@ export default memo(function IracingApps() {
   return (
     <div className="flex flex-col h-full -mx-4 -my-4">
       {/* ── Header bar ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-surface/10 bg-gradient-to-r from-accent/10 to-warn/5">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-surface/10">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-mono font-bold text-muted/80 tracking-wide">iRacing Apps</span>
+          <span className="text-xs font-mono font-semibold text-muted/40 tracking-widest uppercase">iRacing Apps</span>
           <span className={`inline-flex items-center gap-1.5 text-xs font-mono ${iracingConnected ? 'text-success' : 'text-muted/40'}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${iracingConnected ? 'bg-success' : 'bg-muted/30'}`} />
             {iracingConnected ? 'connected' : 'offline'}
           </span>
+          <span className="w-px h-4 bg-surface/15" />
+          <ProfileSelector
+            profiles={profiles}
+            activeId={activeProfileId}
+            open={profileMenu}
+            setOpen={setProfileMenu}
+            onSelect={(id) => { setActiveProfile(id); setProfileMenu(false) }}
+            onCreate={() => {
+              const p: IracingProfile = { id: randomId(), name: 'New Profile', apps: [] }
+              setProfiles([...profiles, p]); setActiveProfile(p.id); setProfileMenu(false)
+            }}
+            onRename={(name) => setProfiles(profiles.map((p) => p.id === activeProfileId ? { ...p, name } : p))}
+            onDuplicate={() => {
+              const p: IracingProfile = { id: randomId(), name: `${profile.name} copy`, apps: profile.apps.map((a) => ({ ...a, id: randomId() })) }
+              setProfiles([...profiles, p]); setActiveProfile(p.id); setProfileMenu(false)
+            }}
+            onDelete={() => {
+              if (profiles.length <= 1) return
+              const next = profiles.filter((p) => p.id !== activeProfileId)
+              setProfiles(next); setActiveProfile(next[0].id); setProfileMenu(false)
+            }}
+          />
+          <span className="text-xs font-mono text-muted/25">{apps.length} app{apps.length !== 1 ? 's' : ''}</span>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => window.api.appsStartAll()}
-            className="px-3 py-1.5 rounded-md bg-success/15 border border-success/25 text-xs font-mono font-semibold text-success/80 hover:bg-success/25 transition-colors">
+            className="px-3 py-1.5 rounded-md bg-surface/10 border border-surface/15 text-xs font-mono font-semibold text-success/70 hover:bg-success/10 hover:border-success/25 transition-colors">
             Start all
           </button>
           <button onClick={() => window.api.appsStopAll()}
-            className="px-3 py-1.5 rounded-md bg-warn/15 border border-warn/25 text-xs font-mono font-semibold text-warn/80 hover:bg-warn/25 transition-colors">
+            className="px-3 py-1.5 rounded-md bg-surface/10 border border-surface/15 text-xs font-mono font-semibold text-warn/70 hover:bg-warn/10 hover:border-warn/25 transition-colors">
             Stop all
           </button>
         </div>
       </div>
 
-      {/* ── Profile bar ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 px-5 py-2 border-b border-surface/10">
-        <ProfileSelector
-          profiles={profiles}
-          activeId={activeProfileId}
-          open={profileMenu}
-          setOpen={setProfileMenu}
-          onSelect={(id) => { setActiveProfile(id); setProfileMenu(false) }}
-          onCreate={() => {
-            const p: IracingProfile = { id: randomId(), name: 'New Profile', apps: [] }
-            setProfiles([...profiles, p]); setActiveProfile(p.id); setProfileMenu(false)
-          }}
-          onRename={(name) => setProfiles(profiles.map((p) => p.id === activeProfileId ? { ...p, name } : p))}
-          onDuplicate={() => {
-            const p: IracingProfile = { id: randomId(), name: `${profile.name} copy`, apps: profile.apps.map((a) => ({ ...a, id: randomId() })) }
-            setProfiles([...profiles, p]); setActiveProfile(p.id); setProfileMenu(false)
-          }}
-          onDelete={() => {
-            if (profiles.length <= 1) return
-            const next = profiles.filter((p) => p.id !== activeProfileId)
-            setProfiles(next); setActiveProfile(next[0].id); setProfileMenu(false)
-          }}
-        />
-        <span className="text-xs font-mono text-muted/25">{apps.length} app{apps.length !== 1 ? 's' : ''}</span>
-      </div>
-
       {/* ── Card grid ───────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto p-5">
         {apps.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-muted/25">
+          <button onClick={addApp}
+            className="flex flex-col items-center justify-center h-full w-full gap-3 text-muted/25 hover:text-accent/60 transition-colors">
             <Plus size={32} strokeWidth={1.5} />
-            <p className="text-xs font-mono">No apps in this profile yet</p>
-          </div>
+            <p className="text-xs font-mono">Add your first application</p>
+          </button>
         ) : (
           <div className="flex flex-wrap gap-3">
             {apps.map((a) => (

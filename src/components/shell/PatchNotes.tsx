@@ -1,5 +1,6 @@
-import { memo, useEffect } from 'react'
-import { ChevronRight, X } from 'lucide-react'
+import { memo } from 'react'
+import { ChevronRight } from 'lucide-react'
+import Modal from '@/components/ui/Modal'
 
 interface Props {
   onClose: () => void
@@ -13,6 +14,84 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   {
+    version: '0.10.1',
+    date: 'June 3, 2026',
+    sections: [
+      {
+        label: 'Improved',
+        color: 'text-accent',
+        items: [
+          'Open Source Credits — added node-window-manager and electron-updater',
+          'Release process — version now bumped automatically with each release',
+        ],
+      },
+    ],
+  },
+  {
+    version: '0.10.0',
+    date: 'June 3, 2026',
+    sections: [
+      {
+        label: 'Removed',
+        color: 'text-warn',
+        items: [
+          'Game Settings — tool was unused and has been removed',
+        ],
+      },
+    ],
+  },
+  {
+    version: '0.9.0',
+    date: 'June 3, 2026',
+    sections: [
+      {
+        label: 'New',
+        color: 'text-success',
+        items: [
+          'Monitor Tool — change resolution and refresh rate per monitor from within the app',
+          'Monitor Map — visual layout showing relative monitor positions, click to select',
+          'Presets — one-click Desktop (2560×1440) and iRacing (1920×1080) modes for all monitors, with active indicator',
+          'App Icon — new custom icon across the app, titlebar, tray, and installer',
+        ],
+      },
+      {
+        label: 'Improved',
+        color: 'text-accent',
+        items: [
+          'Config Editor — line numbers with pixel-perfect alignment',
+          'Config Editor — search highlighting shows all matches, active match in accent color',
+          'Config Profiles — edit and delete buttons always visible in profile list',
+          'Screenshot Gallery — delete screenshots directly from the gallery',
+          'Screenshot Gallery — date and time shown on each thumbnail',
+          'Screenshot Preview — loads full-resolution image, resolution badge top-right',
+          'Screenshot Preview — scales correctly on maximized windows',
+        ],
+      },
+      {
+        label: 'Fixed',
+        color: 'text-warn',
+        items: [
+          '8K Screenshot — crop no longer crashes when capture resolution is lower than target',
+        ],
+      },
+    ],
+  },
+  {
+    version: '0.8.0',
+    date: 'June 2, 2026',
+    sections: [
+      {
+        label: 'New',
+        color: 'text-success',
+        items: [
+          'Config Profiles — save sets of iRacing .ini files (app.ini, rendererDX11.ini, …) and switch them all at once',
+          'Save current — snapshot the live config, pick which files to include',
+          'Apply — restore a saved profile over the live config with one click',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.7.0',
     date: 'June 2, 2026',
     sections: [
@@ -24,7 +103,7 @@ const ENTRIES: Entry[] = [
           'Profiles — separate app sets for sprint, endurance, or shared rigs',
           'Auto start/stop — trigger apps on iRacing Sim or iRacing UI launch/close, independently',
           'Per-app options — start hidden, include in Start All / Stop All',
-          'Start All / Stop All — bulk control respecting each app’s include flags',
+          'Start All / Stop All — bulk control respecting each app\'s include flags',
         ],
       },
     ],
@@ -324,86 +403,51 @@ const ENTRIES: Entry[] = [
 ]
 
 export default memo(function PatchNotes({ onClose }: Props) {
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [onClose])
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-      onClick={onClose}
+    <Modal
+      title="Patch Notes"
+      onClose={onClose}
+      footer={<span className="text-xs font-mono text-muted/20">ESC to close</span>}
     >
-      <div
-        className="relative w-full max-w-sm mx-4 rounded-lg bg-surface/8 backdrop-blur-xl border border-surface/12 shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-surface/10">
-          <span className="text-xs font-mono font-semibold tracking-widest uppercase text-muted/40">
-            Patch Notes
-          </span>
-          <button
-            onClick={onClose}
-            className="w-6 h-6 rounded-md flex items-center justify-center text-muted/30 hover:text-muted/70 hover:bg-surface/10 transition-colors"
-          >
-            <X size={14} />
-          </button>
-        </div>
-
-        {/* Entries */}
-        <div className="overflow-y-auto max-h-96 px-5 py-4 space-y-6">
-          {ENTRIES.map((entry) => (
-            <div key={entry.version}>
-              {/* Version row */}
-              <div className="flex items-baseline gap-3 mb-4">
-                <span className="text-sm font-mono font-bold text-muted/80">
-                  v{entry.version}
-                </span>
-                <span className="text-xs font-mono text-muted/30">{entry.date}</span>
-              </div>
-
-              {/* Sections */}
-              {entry.sections.map((section) => (
-                <div key={section.label} className="space-y-2">
-                  <p className={`text-xs font-mono font-semibold uppercase tracking-wider ${section.color} opacity-70`}>
-                    {section.label}
-                  </p>
-                  <ul className="space-y-1.5">
-                    {section.items.map((item) => {
-                      const [title, ...rest] = item.split(' — ')
-                      return (
-                        <li key={item} className="flex items-start gap-1.5 text-xs font-mono">
-                          <ChevronRight size={12} className="mt-px text-muted/20 shrink-0" />
-                          <span className="text-muted/60 leading-relaxed">
-                            {rest.length > 0 ? (
-                              <>
-                                <span className="text-muted/80">{title}</span>
-                                {' — '}
-                                {rest.join(' — ')}
-                              </>
-                            ) : (
-                              title
-                            )}
-                          </span>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </div>
-              ))}
+      <div className="px-5 py-4 space-y-6">
+        {ENTRIES.map((entry) => (
+          <div key={entry.version}>
+            <div className="flex items-baseline gap-3 mb-4">
+              <span className="text-sm font-mono font-bold text-muted/80">v{entry.version}</span>
+              <span className="text-xs font-mono text-muted/30">{entry.date}</span>
             </div>
-          ))}
-        </div>
 
-        {/* Footer */}
-        <div className="px-5 py-3 border-t border-surface/10 flex justify-end">
-          <span className="text-xs font-mono text-muted/20">ESC to close</span>
-        </div>
+            {entry.sections.map((section) => (
+              <div key={section.label} className="space-y-2">
+                <p className={`text-xs font-mono font-semibold uppercase tracking-wider ${section.color} opacity-70`}>
+                  {section.label}
+                </p>
+                <ul className="space-y-1.5">
+                  {section.items.map((item) => {
+                    const [title, ...rest] = item.split(' — ')
+                    return (
+                      <li key={item} className="flex items-start gap-1.5 text-xs font-mono">
+                        <ChevronRight size={12} className="mt-px text-muted/20 shrink-0" />
+                        <span className="text-muted/60 leading-relaxed">
+                          {rest.length > 0 ? (
+                            <>
+                              <span className="text-muted/80">{title}</span>
+                              {' — '}
+                              {rest.join(' — ')}
+                            </>
+                          ) : (
+                            title
+                          )}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
-    </div>
+    </Modal>
   )
 })

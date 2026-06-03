@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.10.1](https://github.com/naizens/Naizen-Tools/compare/v0.10.0...v0.10.1) (2026-06-03)
+
+## [0.10.0](https://github.com/naizens/Naizen-Tools/compare/v0.9.0...v0.10.0) (2026-06-03)
+
+### Features
+
+* remove Game Settings tool ([a2423ea](https://github.com/naizens/Naizen-Tools/commit/a2423ea66022028858c64a3bb2c0a276e3ed2c18))
+
+### Performance Improvements
+
+* switch to SWC, add bundle visualizer, vendor chunk, useTransition in search ([f411496](https://github.com/naizens/Naizen-Tools/commit/f411496430c292380f48e7f1507340577cd5f4a0))
+
+## [0.10.0](https://github.com/naizens/Naizen-Tools/compare/v0.9.0...v0.10.0) (2026-06-03)
+
+### Features
+
+* remove Game Settings tool ([d5baef8](https://github.com/naizens/Naizen-Tools/commit/d5baef87b6d6ec5ee3cfcbecce2bc2b64d43acc3))
+
+### Performance Improvements
+
+* switch to SWC, add bundle visualizer, vendor chunk, useTransition in search ([4c42b3d](https://github.com/naizens/Naizen-Tools/commit/4c42b3d3f550871202337aaccc52776927fd6b4b))
+
+## [0.10.0](https://github.com/naizens/Naizen-Tools/compare/v0.9.0...v0.10.0) (2026-06-03)
+
+### Features
+
+* remove Game Settings tool ([d5baef8](https://github.com/naizens/Naizen-Tools/commit/d5baef87b6d6ec5ee3cfcbecce2bc2b64d43acc3))
+
+### Performance Improvements
+
+* switch to SWC, add bundle visualizer, vendor chunk, useTransition in search ([4c42b3d](https://github.com/naizens/Naizen-Tools/commit/4c42b3d3f550871202337aaccc52776927fd6b4b))
+
 ## [0.3.1](https://github.com/naizens/Naizen-Tools/compare/v0.3.0...v0.3.1) (2026-05-31)
 
 ### Bug Fixes

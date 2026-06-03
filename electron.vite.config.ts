@@ -1,6 +1,7 @@
 import { resolve } from 'path'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
-import react from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react-swc'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 export default defineConfig({
   main: {
@@ -30,6 +31,19 @@ export default defineConfig({
       sourcemap: false,
       rollupOptions: {
         input: resolve('index.html'),
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom', 'zustand'],
+          },
+        },
+        plugins: [
+          visualizer({
+            filename: 'dist/stats.html',
+            open: false,
+            gzipSize: true,
+            brotliSize: true,
+          }),
+        ],
       },
     },
     resolve: {
