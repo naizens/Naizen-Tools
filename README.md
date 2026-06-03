@@ -6,7 +6,6 @@ A collection of iRacing and gaming utilities built with Electron, React, and Typ
 
 - **Anti-AFK** — automatically prevents inactivity kicks
 - **Macros** — Auto Clicker and Auto Key with configurable hotkeys
-- **Game Settings** — anti-pause hook and FPS limiter for iRacing
 - **iRacing Screenshot** — take high-resolution screenshots (up to 8K) with automatic watermark crop and gallery
 - **iRacing Apps** — launch and manage companion apps automatically with iRacing start/stop
 - **Config Profiles** — save and switch iRacing `.ini` config sets with a built-in editor
