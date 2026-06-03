@@ -14,6 +14,20 @@ interface Entry {
 
 const ENTRIES: Entry[] = [
   {
+    version: '0.10.1',
+    date: 'June 3, 2026',
+    sections: [
+      {
+        label: 'Improved',
+        color: 'text-accent',
+        items: [
+          'Open Source Credits — added node-window-manager and electron-updater',
+          'Release process — version now bumped automatically with each release',
+        ],
+      },
+    ],
+  },
+  {
     version: '0.10.0',
     date: 'June 3, 2026',
     sections: [
