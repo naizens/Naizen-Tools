@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { useToolStore } from '@/store/toolStore'
 
-export type Tool = 'afk' | 'clicker' | 'autokey' | 'game' | 'screenshot' | 'iracing-apps' | 'iracing-ini' | 'iracing-monitor'
+export type Tool = 'afk' | 'clicker' | 'autokey' | 'screenshot' | 'iracing-apps' | 'iracing-ini' | 'iracing-monitor'
 
 const MACROS_TOOLS: Tool[] = ['clicker', 'autokey']
-const IRACING_TOOLS: Tool[] = ['game', 'screenshot', 'iracing-apps', 'iracing-ini', 'iracing-monitor']
+const IRACING_TOOLS: Tool[] = ['screenshot', 'iracing-apps', 'iracing-ini', 'iracing-monitor']
 
 const MACROS_ITEMS: { id: Tool; label: string }[] = [
   { id: 'clicker', label: 'Clicker' },
@@ -13,7 +13,6 @@ const MACROS_ITEMS: { id: Tool; label: string }[] = [
 ]
 
 const IRACING_ITEMS: { id: Tool; label: string }[] = [
-  { id: 'game',             label: 'Game Settings' },
   { id: 'screenshot',       label: 'Screenshot' },
   { id: 'iracing-apps',     label: 'Apps' },
   { id: 'iracing-ini',      label: 'Config Profiles' },
@@ -127,7 +126,7 @@ export default function Navbar({ active, onChange }: Props) {
         items={IRACING_ITEMS}
         tools={IRACING_TOOLS}
         active={active}
-        running={running.game}
+        running={false}
         width="w-36"
         onChange={onChange}
       />

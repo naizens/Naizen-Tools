@@ -1,12 +1,14 @@
-import { Minus, Settings, Square, X } from 'lucide-react'
+import { Info, Minus, Settings, Square, X } from 'lucide-react'
 import iconSrc from '../../../assets/icon.png'
 
 interface Props {
   onPatchNotes: () => void
   onSettings: () => void
+  onAbout: () => void
+  onClose: () => void
 }
 
-export default function TitleBar({ onPatchNotes, onSettings }: Props) {
+export default function TitleBar({ onPatchNotes, onSettings, onAbout, onClose }: Props) {
 
   return (
     <div className="drag flex items-center justify-between h-10 px-4 shrink-0 border-b border-surface/10">
@@ -25,9 +27,16 @@ export default function TitleBar({ onPatchNotes, onSettings }: Props) {
       </div>
       <div className="no-drag flex items-center gap-1">
         <button
+          onClick={onAbout}
+          className="w-7 h-7 rounded-md flex items-center justify-center text-muted/40 hover:text-muted/80 hover:bg-surface/10 transition-colors"
+          title="About"
+        >
+          <Info size={14} />
+        </button>
+        <button
           onClick={onSettings}
           className="w-7 h-7 rounded-md flex items-center justify-center text-muted/40 hover:text-muted/80 hover:bg-surface/10 transition-colors"
-          title="Einstellungen"
+          title="Settings"
         >
           <Settings size={14} />
         </button>
@@ -46,7 +55,7 @@ export default function TitleBar({ onPatchNotes, onSettings }: Props) {
           <Square size={12} />
         </button>
         <button
-          onClick={() => window.api.windowClose()}
+          onClick={onClose}
           className="w-7 h-7 rounded-md flex items-center justify-center text-muted/40 hover:text-warn hover:bg-warn/10 transition-colors"
           title="Close"
         >

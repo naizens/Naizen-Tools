@@ -6,6 +6,7 @@ import Spinbox from '@/components/ui/Spinbox'
 import StatusBadge from '@/components/ui/StatusBadge'
 import WindowPicker from '@/components/ui/WindowPicker'
 import HotkeyBox from '@/components/ui/HotkeyBox'
+import Toggle from '@/components/ui/Toggle'
 
 export default memo(function AntiAfk() {
   const running = useToolStore((s) => s.running.afk)
@@ -59,13 +60,7 @@ export default memo(function AntiAfk() {
         />
         <div className="flex items-center justify-between">
           <span className="text-xs font-mono text-muted/50">Enter Key</span>
-          <button
-            onClick={setEnterEnabled}
-            disabled={running}
-            className={`w-9 h-5 rounded-full transition-colors relative flex items-center ${config.enterEnabled ? 'bg-accent' : 'bg-surface/20'} disabled:opacity-40`}
-          >
-            <span className={`absolute w-4 h-4 rounded-full bg-white transition-transform ${config.enterEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
-          </button>
+          <Toggle value={config.enterEnabled} onChange={() => setEnterEnabled()} disabled={running} />
         </div>
         {config.enterEnabled && (
           <Spinbox

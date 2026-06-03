@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useState } from 'react'
+import Select from '@/components/ui/Select'
 
 interface MonitorMode {
   width: number
@@ -176,8 +177,6 @@ export default memo(function MonitorTool() {
     applyTo([selectedMonitor], w, h, Number(selectedHz))
   }
 
-  const selectCls = 'w-full bg-app border border-surface/15 rounded-md px-3 h-9 text-xs font-mono text-muted/70 focus:outline-none focus:border-accent/40 [color-scheme:dark]'
-
   const activeIdx = monitors.findIndex(m => m.name === selectedMonitor)
 
   function isPresetActive(w: number, h: number, hz: number) {
@@ -218,15 +217,15 @@ export default memo(function MonitorTool() {
           <div className="flex gap-3 pt-1">
             <div className="flex-1">
               <p className="text-xs font-mono text-muted/30 mb-1 uppercase tracking-wider">Resolution</p>
-              <select value={selectedRes} onChange={e => onResChange(e.target.value)} className={selectCls}>
+              <Select value={selectedRes} onChange={e => onResChange(e.target.value)}>
                 {resList.map((r, i) => <option key={`res-${i}`} value={r}>{r}</option>)}
-              </select>
+              </Select>
             </div>
             <div className="w-28">
               <p className="text-xs font-mono text-muted/30 mb-1 uppercase tracking-wider">Hz</p>
-              <select value={selectedHz} onChange={e => setHz(e.target.value)} className={selectCls}>
+              <Select value={selectedHz} onChange={e => setHz(e.target.value)}>
                 {hzOptions.map((h, i) => <option key={`hz-${i}`} value={h}>{h}</option>)}
-              </select>
+              </Select>
             </div>
           </div>
 

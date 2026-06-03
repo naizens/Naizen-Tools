@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { Camera, ChevronDown, ExternalLink, FolderOpen, RefreshCw, Settings, Trash2, X } from 'lucide-react'
 import { useToolStore } from '@/store/toolStore'
+import Toggle from '@/components/ui/Toggle'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -231,7 +232,7 @@ export default memo(function IracingScreenshot() {
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-muted/80">Crop Watermark</p>
-              <RefToggle value={cfg.crop} onChange={(v) => setCfg({ crop: v })} />
+              <Toggle value={cfg.crop} onChange={(v) => setCfg({ crop: v })} />
             </div>
             {cfg.crop && (
               <p className="text-xs text-cyan-400/60 leading-relaxed">
@@ -244,7 +245,7 @@ export default memo(function IracingScreenshot() {
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-muted/80">Keep Aspect Ratio</p>
-              <RefToggle value={cfg.keepAspectRatio} onChange={(v) => setCfg({ keepAspectRatio: v })} />
+              <Toggle value={cfg.keepAspectRatio} onChange={(v) => setCfg({ keepAspectRatio: v })} />
             </div>
             {cfg.keepAspectRatio && cfg.screenWidth === 0 && (
               <p className="text-xs text-amber/70">
@@ -400,17 +401,6 @@ export default memo(function IracingScreenshot() {
     </div>
   )
 })
-
-// ─── Toggle (reference style) ─────────────────────────────────────────────────
-
-function RefToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button onClick={() => onChange(!value)}
-      className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${value ? 'bg-warn/80' : 'bg-surface/20'}`}>
-      <span className={`absolute top-1 w-4 h-4 rounded-full transition-all ${value ? 'left-6 bg-white' : 'left-1 bg-muted/40'}`} />
-    </button>
-  )
-}
 
 // ─── Settings modal ───────────────────────────────────────────────────────────
 
@@ -619,7 +609,7 @@ function SettingsToggleRow({ label, desc, value, onChange }: {
         <p className="text-sm font-semibold text-muted/70">{label}</p>
         <p className="text-xs text-muted/35 mt-0.5 leading-relaxed">{desc}</p>
       </div>
-      <RefToggle value={value} onChange={onChange} />
+      <Toggle value={value} onChange={onChange} />
     </div>
   )
 }

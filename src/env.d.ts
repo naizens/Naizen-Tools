@@ -14,6 +14,8 @@ interface Window {
     windowMinimize: () => void
     windowMaximize: () => void
     windowClose: () => void
+    windowHide: () => void
+    windowQuit: () => void
     onUpdateDownloaded: (cb: () => void) => () => void
     updateInstall: () => void
     windowsList: () => Promise<WindowInfo[]>

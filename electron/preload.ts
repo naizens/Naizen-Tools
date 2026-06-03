@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('api', {
   windowMinimize: () => ipcRenderer.send('window:minimize'),
   windowMaximize: () => ipcRenderer.send('window:maximize'),
   windowClose: () => ipcRenderer.send('window:close'),
+  windowHide: () => ipcRenderer.send('window:hide'),
+  windowQuit: () => ipcRenderer.send('window:quit'),
   onUpdateDownloaded: (cb: () => void) => {
     const handler = () => cb()
     ipcRenderer.on('update:downloaded', handler)

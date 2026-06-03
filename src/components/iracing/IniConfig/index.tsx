@@ -1,69 +1,44 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, ArrowDown, ArrowUp, Check, FileText, FolderOpen, Pencil, Plus, RefreshCw, Save, Settings, Trash2, X } from 'lucide-react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { AlertTriangle, ArrowDown, ArrowUp, FileText, FolderOpen, Pencil, Plus, RefreshCw, Save, Settings, Trash2, X } from 'lucide-react'
 import { useToolStore } from '@/store/toolStore'
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
-
-function computeMatches(text: string, q: string): number[] {
-  if (!q) return []
-  const out: number[] = []
-  const hay = text.toLowerCase(), needle = q.toLowerCase()
-  let i = hay.indexOf(needle)
-  while (i !== -1) { out.push(i); i = hay.indexOf(needle, i + Math.max(1, needle.length)) }
-  return out
-}
-
-interface IniProfile { id: string; name: string; slug: string; files: string[]; savedAt: number }
-
-function sourceName(target: string, slug: string): string {
-  const dot = target.lastIndexOf('.')
-  const stem = dot >= 0 ? target.slice(0, dot) : target
-  const ext  = dot >= 0 ? target.slice(dot) : ''
-  return `${stem}_${slug}${ext}`
-}
-
-function fmtDate(ts: number) {
-  return new Date(ts).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
-}
-
-// ─── Main component ───────────────────────────────────────────────────────────
+import { escapeHtml, computeMatches, sourceName, fmtDate, type IniProfile } from './types'
+import SaveDialog from './SaveDialog'
+import EditDialog from './EditDialog'
+import ManagedFilesModal from './ManagedFilesModal'
 
 export default memo(function IniConfig() {
-  const folder         = useToolStore((s) => s.iniFolder)
-  const setFolder      = useToolStore((s) => s.setIniFolder)
-  const activeId       = useToolStore((s) => s.iniActiveProfileId)
-  const setActiveId    = useToolStore((s) => s.setIniActiveProfile)
-  const managedFiles   = useToolStore((s) => s.iniManagedFiles)
+  const folder          = useToolStore((s) => s.iniFolder)
+  const setFolder       = useToolStore((s) => s.setIniFolder)
+  const activeId        = useToolStore((s) => s.iniActiveProfileId)
+  const setActiveId     = useToolStore((s) => s.setIniActiveProfile)
+  const managedFiles    = useToolStore((s) => s.iniManagedFiles)
   const setManagedFiles = useToolStore((s) => s.setIniManagedFiles)
 
-  const [files, setFiles]   = useState<string[]>([])
-  const [mtimes, setMtimes] = useState<Record<string, number>>({})
+  const [files, setFiles]       = useState<string[]>([])
+  const [mtimes, setMtimes]     = useState<Record<string, number>>({})
   const [selected, setSelected] = useState<string | null>(null)
   const [content, setContent]   = useState('')
   const [profiles, setProfiles] = useState<IniProfile[]>([])
 
-  const [saving, setSaving]         = useState(false)
-  const [editProfile, setEditProfile] = useState<IniProfile | null>(null)
+  const [saving, setSaving]               = useState(false)
+  const [editProfile, setEditProfile]     = useState<IniProfile | null>(null)
   const [showManagedSettings, setShowManagedSettings] = useState(false)
-  const [toast, setToast]           = useState<string | null>(null)
-  const [applying, setApplying]     = useState<string | null>(null)
+  const [toast, setToast]                 = useState<string | null>(null)
+  const [applying, setApplying]           = useState<string | null>(null)
 
-  // unsaved-changes warning state
-  const [pendingApply, setPendingApply] = useState<IniProfile | null>(null)
-  const [changedFiles, setChangedFiles] = useState<string[]>([])
+  const [pendingApply, setPendingApply]   = useState<IniProfile | null>(null)
+  const [changedFiles, setChangedFiles]   = useState<string[]>([])
 
-  // file editing
-  const [editing, setEditing]   = useState(false)
-  const [draft, setDraft]       = useState('')
+  const [editing, setEditing]             = useState(false)
+  const [draft, setDraft]                 = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  // find-in-editor (Ctrl+F)
-  const [findOpen, setFindOpen]   = useState(false)
-  const [findQuery, setFindQuery] = useState('')
-  const [findIdx, setFindIdx]     = useState(0)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [findOpen, setFindOpen]         = useState(false)
+  const [findInputValue, setFindInputValue] = useState('')
+  const [findQuery, setFindQuery]       = useState('')
+  const [findIdx, setFindIdx]           = useState(0)
+  const [isSearchPending, startSearchTransition] = useTransition()
+  const textareaRef  = useRef<HTMLTextAreaElement>(null)
   const highlightRef = useRef<HTMLDivElement>(null)
   const lineNumRef   = useRef<HTMLDivElement>(null)
   const findInputRef = useRef<HTMLInputElement>(null)
@@ -105,12 +80,14 @@ export default memo(function IniConfig() {
     const ta = textareaRef.current
     const sel = ta && ta.selectionStart !== ta.selectionEnd
       ? draft.slice(ta.selectionStart, ta.selectionEnd) : ''
-    if (sel && !sel.includes('\n')) setFindQuery(sel)
+    if (sel && !sel.includes('\n')) {
+      setFindInputValue(sel)
+      startSearchTransition(() => setFindQuery(sel))
+    }
     setFindOpen(true)
     setTimeout(() => findInputRef.current?.select(), 0)
   }, [draft])
 
-  // Measure textarea's actual computed line-height when editor opens
   useEffect(() => {
     if (!editing) return
     requestAnimationFrame(() => {
@@ -121,7 +98,6 @@ export default memo(function IniConfig() {
     })
   }, [editing])
 
-  // jump to first match when the query changes
   useEffect(() => {
     if (findOpen && findQuery) {
       const ms = computeMatches(draft, findQuery)
@@ -143,7 +119,7 @@ export default memo(function IniConfig() {
     (async () => {
       let f = folder
       if (!f) { f = await window.api.iniDetectFolder(); setFolder(f) }
-      await window.api.iniMigrate(f)   // repair old crossed/shared mappings once
+      await window.api.iniMigrate(f)
       await refresh(f)
     })()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -176,7 +152,6 @@ export default memo(function IniConfig() {
     if (f) { setFolder(f); await refresh(f) }
   }
 
-  // Update active profile with current live files (no warning needed — user is explicitly updating)
   const updateActiveProfile = async () => {
     const active = profiles.find((p) => p.id === activeId)
     if (!active) return
@@ -185,15 +160,10 @@ export default memo(function IniConfig() {
     await refresh(folder)
   }
 
-  // Apply: check for unsaved changes first
   const requestApply = async (p: IniProfile) => {
     if (activeId && activeId !== p.id) {
       const { changed } = await window.api.iniCompare(activeId, folder)
-      if (changed.length > 0) {
-        setChangedFiles(changed)
-        setPendingApply(p)
-        return
-      }
+      if (changed.length > 0) { setChangedFiles(changed); setPendingApply(p); return }
     }
     doApply(p)
   }
@@ -245,11 +215,10 @@ export default memo(function IniConfig() {
         </div>
       </div>
 
-      {/* Two-pane */}
+      {/* Two-pane layout */}
       <div className="flex-1 flex min-h-0">
-        {/* Left navbar */}
+        {/* Left: profiles + files nav */}
         <div className="w-64 shrink-0 border-r border-surface/10 overflow-y-auto flex flex-col">
-          {/* Profiles */}
           <div className="px-3 pt-3 pb-1">
             <span className="text-xs font-mono font-semibold text-muted/30 tracking-wider uppercase">Profiles</span>
           </div>
@@ -289,7 +258,6 @@ export default memo(function IniConfig() {
             </div>
           )}
 
-          {/* Files */}
           <div className="px-3 pt-2 pb-1 border-t border-surface/10">
             <span className="text-xs font-mono font-semibold text-muted/30 tracking-wider uppercase">Files</span>
           </div>
@@ -309,7 +277,7 @@ export default memo(function IniConfig() {
           </div>
         </div>
 
-        {/* Right: preview */}
+        {/* Right: file preview / editor */}
         <div className="flex-1 flex flex-col min-w-0">
           {selected ? (
             <>
@@ -350,20 +318,23 @@ export default memo(function IniConfig() {
                   )}
                 </div>
               </div>
+
               {editing ? (
                 <div className="relative flex-1 min-h-0 flex flex-col">
                   {findOpen && (
                     <div className="absolute top-2 right-3 z-10 flex items-center gap-1 px-2 py-1 rounded-md bg-app border border-surface/20 shadow-xl">
-                      <input
-                        ref={findInputRef}
-                        value={findQuery}
-                        onChange={(e) => setFindQuery(e.target.value)}
+                      <input ref={findInputRef} value={findInputValue}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setFindInputValue(v)
+                          startSearchTransition(() => setFindQuery(v))
+                        }}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') { e.preventDefault(); goToMatch(findIdx + (e.shiftKey ? -1 : 1), matches, findQuery) }
                           if (e.key === 'Escape') { e.preventDefault(); setFindOpen(false); textareaRef.current?.focus() }
                         }}
                         placeholder="Find"
-                        className="w-36 bg-transparent text-xs font-mono text-muted/70 focus:outline-none placeholder:text-muted/30"
+                        className={`w-36 bg-transparent text-xs font-mono focus:outline-none placeholder:text-muted/30 transition-colors ${isSearchPending ? 'text-muted/40' : 'text-muted/70'}`}
                       />
                       <span className="text-xs font-mono text-muted/30 tabular-nums px-1">
                         {matches.length ? `${findIdx + 1}/${matches.length}` : findQuery ? '0/0' : ''}
@@ -377,21 +348,14 @@ export default memo(function IniConfig() {
                     </div>
                   )}
                   <div className="flex flex-1 min-h-0 overflow-hidden">
-                    {/* Line number gutter — single text block to avoid sub-pixel drift */}
-                    <div
-                      ref={lineNumRef}
-                      aria-hidden
+                    <div ref={lineNumRef} aria-hidden
                       className="shrink-0 overflow-hidden select-none border-r border-surface/10 pr-3 text-right text-xs font-mono whitespace-pre text-muted/20"
-                      style={{ width: 44, ...gutterStyle }}
-                    >
+                      style={{ width: 44, ...gutterStyle }}>
                       {draft.split('\n').map((_, i) => i + 1).join('\n')}
                     </div>
-                    {/* Editor */}
                     <div className="relative flex-1 min-h-0">
                       {highlightedHtml && (
-                        <div
-                          ref={highlightRef}
-                          aria-hidden
+                        <div ref={highlightRef} aria-hidden
                           dangerouslySetInnerHTML={{ __html: highlightedHtml }}
                           className="absolute inset-0 pt-4 pb-4 pr-4 pl-3 text-xs font-mono leading-5 whitespace-pre overflow-auto pointer-events-none [color:transparent] [&::-webkit-scrollbar]:hidden"
                         />
@@ -400,10 +364,7 @@ export default memo(function IniConfig() {
                         onScroll={() => {
                           const ta = textareaRef.current
                           if (!ta) return
-                          if (highlightRef.current) {
-                            highlightRef.current.scrollTop  = ta.scrollTop
-                            highlightRef.current.scrollLeft = ta.scrollLeft
-                          }
+                          if (highlightRef.current) { highlightRef.current.scrollTop = ta.scrollTop; highlightRef.current.scrollLeft = ta.scrollLeft }
                           if (lineNumRef.current) {
                             const gutter = lineNumRef.current
                             const taMax  = ta.scrollHeight - ta.clientHeight
@@ -411,10 +372,9 @@ export default memo(function IniConfig() {
                             gutter.scrollTop = taMax > 0 ? ta.scrollTop * gutMax / taMax : ta.scrollTop
                           }
                         }}
-                        onKeyDown={(e) => {
-                          if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); openFind() }
-                        }}
-                        className="absolute inset-0 pt-4 pb-4 pr-4 pl-3 text-xs font-mono text-muted/70 leading-5 bg-transparent resize-none focus:outline-none whitespace-pre [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-surface/30 [&::-webkit-scrollbar-track]:bg-transparent" />
+                        onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); openFind() } }}
+                        className="absolute inset-0 pt-4 pb-4 pr-4 pl-3 text-xs font-mono text-muted/70 leading-5 bg-transparent resize-none focus:outline-none whitespace-pre [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-surface/30 [&::-webkit-scrollbar-track]:bg-transparent"
+                      />
                     </div>
                   </div>
                 </div>
@@ -476,13 +436,11 @@ export default memo(function IniConfig() {
           onClose={() => setSaving(false)}
           onSaved={(msg, id) => { setSaving(false); if (id) setActiveId(id); flash(msg); refresh(folder) }} />
       )}
-
       {editProfile && (
         <EditDialog profile={editProfile}
           onClose={() => setEditProfile(null)}
           onSaved={(msg) => { setEditProfile(null); flash(msg); refresh(folder) }} />
       )}
-
       {showManagedSettings && (
         <ManagedFilesModal allFiles={files} managedFiles={managedFiles}
           onClose={() => setShowManagedSettings(false)}
@@ -491,193 +449,3 @@ export default memo(function IniConfig() {
     </div>
   )
 })
-
-// ─── Save (new profile) — name only ──────────────────────────────────────────
-
-function SaveDialog({ folder, managedFiles, existing, onClose, onSaved }: {
-  folder: string
-  managedFiles: string[]
-  existing: IniProfile[]
-  onClose: () => void
-  onSaved: (msg: string, id?: string) => void
-}) {
-  const [name, setName] = useState('')
-
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', h)
-    return () => window.removeEventListener('keydown', h)
-  }, [onClose])
-
-  const save = async () => {
-    if (!name.trim()) return
-    const p = await window.api.iniCreate({ name: name.trim(), folder, managedFiles })
-    onSaved(`Saved "${name.trim()}"`, p.id)
-  }
-
-  const nameExists = existing.some((p) => p.name.toLowerCase() === name.trim().toLowerCase())
-
-  return (
-    <Modal title="New Config Profile" onClose={onClose} footer={
-      <>
-        <button onClick={onClose} className="px-4 py-1.5 rounded-md border border-surface/15 text-xs font-mono text-muted/50 hover:text-muted/80 hover:bg-surface/10 transition-colors">Cancel</button>
-        <button onClick={save} disabled={!name.trim()}
-          className="px-4 py-1.5 rounded-md bg-accent/20 border border-accent/30 text-xs font-mono font-semibold text-accent hover:bg-accent/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">Save</button>
-      </>
-    }>
-      <div>
-        <p className="text-xs font-mono text-muted/40 mb-1">Profile name</p>
-        <input autoFocus value={name} onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') save() }}
-          placeholder="e.g. Triple 1440p, Triple 1080p, Screenshot"
-          className="w-full bg-surface/10 border border-surface/15 rounded-md px-3 h-9 text-xs font-mono text-muted/70 focus:outline-none focus:border-accent/40" />
-        {nameExists && <p className="text-xs font-mono text-amber/60 mt-1">A profile with this name already exists</p>}
-      </div>
-      <div className="bg-surface/10 rounded-md px-3 py-2.5 space-y-1">
-        <p className="text-xs font-mono text-muted/40 mb-1">Captures a copy of:</p>
-        {managedFiles.map((f) => (
-          <p key={f} className="text-xs font-mono text-muted/60 flex items-center gap-2">
-            <FileText size={10} className="text-accent/50" /> {f}
-          </p>
-        ))}
-      </div>
-    </Modal>
-  )
-}
-
-// ─── Edit dialog (rename + show source files) ─────────────────────────────────
-
-function EditDialog({ profile, onClose, onSaved }: {
-  profile: IniProfile
-  onClose: () => void
-  onSaved: (msg: string) => void
-}) {
-  const [name, setName] = useState(profile.name)
-
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', h)
-    return () => window.removeEventListener('keydown', h)
-  }, [onClose])
-
-  const save = async () => {
-    if (!name.trim()) return
-    await window.api.iniRename(profile.id, name.trim())
-    onSaved(`Renamed to "${name.trim()}"`)
-  }
-
-  return (
-    <Modal title="Edit Profile" onClose={onClose} footer={
-      <>
-        <button onClick={async () => { await window.api.iniDelete(profile.id); onSaved('Deleted profile') }}
-          className="mr-auto flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono text-warn/60 hover:text-warn hover:bg-warn/10 transition-colors">
-          <Trash2 size={12} /> Delete
-        </button>
-        <button onClick={onClose} className="px-4 py-1.5 rounded-md border border-surface/15 text-xs font-mono text-muted/50 hover:text-muted/80 hover:bg-surface/10 transition-colors">Cancel</button>
-        <button onClick={save} disabled={!name.trim()}
-          className="px-4 py-1.5 rounded-md bg-accent/20 border border-accent/30 text-xs font-mono font-semibold text-accent hover:bg-accent/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">Save</button>
-      </>
-    }>
-      <div>
-        <p className="text-xs font-mono text-muted/40 mb-1">Profile name</p>
-        <input value={name} onChange={(e) => setName(e.target.value)}
-          className="w-full bg-surface/10 border border-surface/15 rounded-md px-3 h-9 text-xs font-mono text-muted/70 focus:outline-none focus:border-accent/40" />
-        <p className="text-xs font-mono text-muted/25 mt-1">Renaming keeps the existing source files.</p>
-      </div>
-      <div className="bg-surface/10 rounded-md px-3 py-2.5 space-y-1.5">
-        <p className="text-xs font-mono text-muted/40">Swaps these files:</p>
-        {profile.files.map((target) => (
-          <p key={target} className="text-xs font-mono text-muted/60 flex items-center gap-1.5">
-            <span className="text-accent/60">{sourceName(target, profile.slug)}</span>
-            <span className="text-muted/25">→</span>
-            <span>{target}</span>
-          </p>
-        ))}
-      </div>
-    </Modal>
-  )
-}
-
-// ─── Managed files settings ───────────────────────────────────────────────────
-
-function ManagedFilesModal({ allFiles, managedFiles, onClose, onSave }: {
-  allFiles: string[]
-  managedFiles: string[]
-  onClose: () => void
-  onSave: (files: string[]) => void
-}) {
-  const [selected, setSelected] = useState<Set<string>>(new Set(managedFiles))
-  const [custom, setCustom]     = useState('')
-
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', h)
-    return () => window.removeEventListener('keydown', h)
-  }, [onClose])
-
-  const toggle = (f: string) => setSelected((prev) => {
-    const next = new Set(prev); next.has(f) ? next.delete(f) : next.add(f); return next
-  })
-  const addCustom = () => {
-    const f = custom.trim()
-    if (!f || selected.has(f)) return
-    setSelected((prev) => new Set([...prev, f]))
-    setCustom('')
-  }
-
-  const allOptions = [...new Set([...allFiles, ...managedFiles])].sort((a, b) => a.localeCompare(b))
-
-  return (
-    <Modal title="Managed Files" onClose={onClose} footer={
-      <>
-        <button onClick={onClose} className="px-4 py-1.5 rounded-md border border-surface/15 text-xs font-mono text-muted/50 hover:text-muted/80 hover:bg-surface/10 transition-colors">Cancel</button>
-        <button onClick={() => onSave([...selected])}
-          className="px-4 py-1.5 rounded-md bg-accent/20 border border-accent/30 text-xs font-mono font-semibold text-accent hover:bg-accent/30 transition-colors">Save</button>
-      </>
-    }>
-      <p className="text-xs font-mono text-muted/40">Choose which files all profiles will capture and swap.</p>
-      <div className="space-y-1 rounded-md border border-surface/10 p-1.5 max-h-52 overflow-y-auto">
-        {allOptions.map((f) => (
-          <label key={f} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-surface/10 cursor-pointer">
-            <span className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border ${selected.has(f) ? 'bg-accent/30 border-accent/40' : 'border-surface/20'}`}>
-              {selected.has(f) && <Check size={10} className="text-accent" />}
-            </span>
-            <span className="text-xs font-mono text-muted/60 truncate">{f}</span>
-          </label>
-        ))}
-      </div>
-      <div className="flex gap-2">
-        <input value={custom} onChange={(e) => setCustom(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') addCustom() }}
-          placeholder="Add file not in list… (e.g. custom.ini)"
-          className="flex-1 bg-surface/10 border border-surface/15 rounded-md px-3 h-8 text-xs font-mono text-muted/70 focus:outline-none focus:border-accent/40" />
-        <button onClick={addCustom} className="px-3 h-8 rounded-md border border-surface/15 text-xs font-mono text-muted/50 hover:text-muted/80 hover:bg-surface/10 transition-colors">Add</button>
-      </div>
-    </Modal>
-  )
-}
-
-// ─── Shared modal shell ───────────────────────────────────────────────────────
-
-function Modal({ title, onClose, footer, children }: {
-  title: string
-  onClose: () => void
-  footer: React.ReactNode
-  children: React.ReactNode
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="relative w-full max-w-md mx-4 rounded-lg bg-surface/8 backdrop-blur-xl border border-surface/12 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-surface/10 shrink-0">
-          <span className="text-sm font-semibold text-muted/80">{title}</span>
-          <button onClick={onClose} className="w-7 h-7 rounded-md flex items-center justify-center text-muted/30 hover:text-muted/70 hover:bg-surface/10 transition-colors">
-            <X size={14} />
-          </button>
-        </div>
-        <div className="overflow-y-auto flex-1 p-5 space-y-4">{children}</div>
-        <div className="px-5 py-3 border-t border-surface/10 flex items-center justify-end gap-2 shrink-0">{footer}</div>
-      </div>
-    </div>
-  )
-}

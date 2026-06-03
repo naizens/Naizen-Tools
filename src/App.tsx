@@ -1,20 +1,21 @@
 import React, { Suspense, useEffect, useState } from 'react'
 import { useToolStore } from './store/toolStore'
-import TitleBar from './components/ui/TitleBar'
-import Navbar, { type Tool } from './components/ui/Navbar'
-import UpdateBadge from './components/ui/UpdateBadge'
+import TitleBar from './components/shell/TitleBar'
+import Navbar, { type Tool } from './components/shell/Navbar'
+import UpdateBadge from './components/shell/UpdateBadge'
+import CloseDialog from './components/shell/CloseDialog'
 
-const AntiAfk      = React.lazy(() => import('./components/tools/AntiAfk'))
-const WHold        = React.lazy(() => import('./components/tools/WHold'))
-const AutoClicker  = React.lazy(() => import('./components/tools/AutoClicker'))
-const AutoKey      = React.lazy(() => import('./components/tools/AutoKey'))
-const GameSettings       = React.lazy(() => import('./components/tools/GameSettings'))
-const IracingScreenshot  = React.lazy(() => import('./components/tools/IracingScreenshot'))
-const IracingApps        = React.lazy(() => import('./components/tools/IracingApps'))
-const IniConfig          = React.lazy(() => import('./components/tools/IniConfig'))
-const MonitorTool        = React.lazy(() => import('./components/tools/MonitorTool'))
-const PatchNotes   = React.lazy(() => import('./components/tools/PatchNotes'))
-const Settings     = React.lazy(() => import('./components/tools/Settings'))
+const AntiAfk      = React.lazy(() => import('./components/macros/AntiAfk'))
+const WHold        = React.lazy(() => import('./components/macros/WHold'))
+const AutoClicker  = React.lazy(() => import('./components/macros/AutoClicker'))
+const AutoKey      = React.lazy(() => import('./components/macros/AutoKey'))
+const IracingScreenshot  = React.lazy(() => import('./components/iracing/IracingScreenshot'))
+const IracingApps        = React.lazy(() => import('./components/iracing/IracingApps'))
+const IniConfig          = React.lazy(() => import('./components/iracing/IniConfig'))
+const MonitorTool        = React.lazy(() => import('./components/iracing/MonitorTool'))
+const PatchNotes   = React.lazy(() => import('./components/shell/PatchNotes'))
+const Settings     = React.lazy(() => import('./components/shell/Settings'))
+const About        = React.lazy(() => import('./components/shell/About'))
 
 function ToolFallback() {
   return (
@@ -30,7 +31,21 @@ export default function App() {
 
   const [activeTool, setActiveTool] = useState<Tool>('afk')
   const [patchNotesOpen, setPatchNotesOpen] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen]     = useState(false)
+  const [aboutOpen, setAboutOpen]           = useState(false)
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false)
+
+  const rememberCloseAction = useToolStore((s) => s.rememberCloseAction)
+  const closeAction         = useToolStore((s) => s.closeAction)
+
+  function handleClose() {
+    if (rememberCloseAction) {
+      if (closeAction === 'quit') window.api.windowQuit()
+      else window.api.windowHide()
+    } else {
+      setCloseDialogOpen(true)
+    }
+  }
 
   useEffect(() => {
     const el = document.documentElement
@@ -92,7 +107,7 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen bg-app text-muted/80 select-none">
-      <TitleBar onPatchNotes={() => setPatchNotesOpen(true)} onSettings={() => setSettingsOpen(true)} />
+      <TitleBar onPatchNotes={() => setPatchNotesOpen(true)} onSettings={() => setSettingsOpen(true)} onAbout={() => setAboutOpen(true)} onClose={handleClose} />
       <UpdateBadge />
       <Navbar active={activeTool} onChange={setActiveTool} />
       <main className={[
@@ -106,7 +121,6 @@ export default function App() {
               {activeTool === 'afk'     && <AntiAfk />}
               {activeTool === 'clicker' && <AutoClicker />}
               {activeTool === 'autokey' && <AutoKey />}
-              {activeTool === 'game'    && <GameSettings />}
             </div>
           )}
           {activeTool === 'screenshot'      && <IracingScreenshot />}
@@ -124,6 +138,14 @@ export default function App() {
         <Suspense fallback={null}>
           <Settings onClose={() => setSettingsOpen(false)} />
         </Suspense>
+      )}
+      {aboutOpen && (
+        <Suspense fallback={null}>
+          <About onClose={() => setAboutOpen(false)} />
+        </Suspense>
+      )}
+      {closeDialogOpen && (
+        <CloseDialog onClose={() => setCloseDialogOpen(false)} />
       )}
     </div>
   )
