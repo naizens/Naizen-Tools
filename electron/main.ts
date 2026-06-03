@@ -321,7 +321,6 @@ const stopFlags: Record<string, boolean> = {
   whold: true,
   clicker: true,
   autokey: true,
-  game: true,
 }
 
 let nutKeyboard: typeof import('@nut-tree-fork/nut-js').keyboard | null = null
@@ -587,20 +586,6 @@ function setupIpc() {
       clickerLoop(config['button'] as 'left' | 'right' | 'middle', config['intervalMs'] as number)
     } else if (tool === 'autokey') {
       autokeyLoop(config['key'] as string, config['downMs'] as number, config['upMs'] as number)
-    } else if (tool === 'game') {
-      const windowTitle = (config['windowTitle'] as string) ?? ''
-      const fgFps       = (config['fgFps'] as number) ?? 0
-      const bgFps       = (config['bgFps'] as number) ?? 0
-      loadAntiPauseDll()
-      fnSetFps!(fgFps, bgFps)
-      if (windowTitle) {
-        await loadWindowUtils()
-        const target = winManager!.windowManager.getWindows().find((w) => {
-          try { return w.getTitle().toLowerCase().includes(windowTitle.toLowerCase()) }
-          catch { return false }
-        })
-        if (target) startKeepFocus(target.handle as number)
-      }
     }
 
     win?.webContents.send('tool:status', { tool, running: true })
@@ -608,10 +593,6 @@ function setupIpc() {
 
   ipcMain.handle('tool:stop', async (_, { tool }: { tool: string }) => {
     stopFlags[tool] = true
-    if (tool === 'game') {
-      stopKeepFocus()
-      if (fnSetFps) fnSetFps(0, 0)
-    }
     if (tool === 'afk' && afkTickTimer) {
       clearTimeout(afkTickTimer)
       afkTickTimer = null
@@ -624,11 +605,6 @@ function setupIpc() {
 
   ipcMain.handle('hotkey:set',   (_, { tool, raw }: { tool: string; raw: string }) => registerHotkey(tool, raw))
   ipcMain.handle('hotkey:clear', (_, { tool }: { tool: string })                   => unregisterHotkey(tool))
-
-  ipcMain.handle('game:setFps', (_, { fg, bg }: { fg: number; bg: number }) => {
-    loadAntiPauseDll()
-    fnSetFps!(fg, bg)
-  })
 
   ipcMain.handle('capture:start', async (_, { type }: { type: 'keyboard' | 'mouse' }) => {
     await loadUiohook()
@@ -682,6 +658,8 @@ function setupIpc() {
   ipcMain.on('window:minimize', () => win?.minimize())
   ipcMain.on('window:maximize', () => (win?.isMaximized() ? win.unmaximize() : win?.maximize()))
   ipcMain.on('window:close', () => closeAction === 'quit' ? app.exit() : win?.hide())
+  ipcMain.on('window:hide', () => win?.hide())
+  ipcMain.on('window:quit', () => { saveWinState(); app.exit() })
   ipcMain.on('update:install', () => autoUpdater.quitAndInstall())
   ipcMain.on('close-action:set', (_, action: 'minimize' | 'quit') => { closeAction = action })
 
