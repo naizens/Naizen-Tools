@@ -25,57 +25,72 @@ Vollautomatischer Release nach den Branch-Regeln aus CLAUDE.md.
    git pull origin dev
    ```
 
-4. `dev` in `main` mergen:
+4. Open Source Credits prüfen (`src/components/shell/About.tsx`):
+   - Jede runtime dependency aus `package.json` → dependencies muss einen Eintrag haben
+   - Bekannte Liste: Electron, React, Tailwind, Zustand, Lucide, sharp, koffi,
+     uiohook-napi, nut-tree-fork, node-window-manager, electron-updater,
+     electron-builder, electron-vite
+   - Falls eine Dependency fehlt oder entfernt wurde → Credits anpassen und committen
+
+5. Patch Notes aktualisieren (`src/components/shell/PatchNotes.tsx`):
+   - Commits seit dem letzten Tag lesen:
+     ```
+     git log <last-tag>..HEAD --oneline
+     ```
+   - Neuen Eintrag **oben** ins `ENTRIES`-Array einfügen:
+     - `version` = neue Versionsnummer (z.B. `"0.11.0"`)
+     - `date` = heutiges Datum auf Englisch (z.B. `"June 3, 2026"`)
+     - Sections aus Commits ableiten:
+       - `feat` → `{ label: 'New', color: 'text-success' }`
+       - `fix` → `{ label: 'Fixed', color: 'text-warn' }`
+       - `perf` / `refactor` → `{ label: 'Improved', color: 'text-accent' }`
+       - Entfernte Features → `{ label: 'Removed', color: 'text-warn' }`
+   - **Sprache:** Einfaches Englisch — keine technischen Details, aus User-Sicht.
+     Schlecht: `"Refactored IPC handler"` — Gut: `"App responds faster to keypresses"`
+   - Danach committen:
+     ```
+     git add src/components/shell/PatchNotes.tsx
+     git commit -m "docs: add vX.Y.Z patch notes"
+     git push origin dev
+     ```
+
+6. `dev` in `main` mergen:
    ```
    git checkout main
    git pull origin main
-   git merge dev --no-ff -m "chore: merge dev into main for release"
+   git merge dev --no-ff -m "chore: merge dev into main for release vX.Y.Z"
+   git push origin main
    ```
 
-5. Update patch notes in the app (`src/components/tools/PatchNotes.tsx`):
-   - New `version` = the new version number (e.g. `"0.4.0"`)
-   - `date` = today's date in English (e.g. `"May 31, 2026"`)
-   - Build `sections` from commits since the last tag:
-     - Run `git log <last-tag>..HEAD --oneline`
-     - `feat` commits → Section `{ label: 'New', color: 'text-success' }`
-     - `fix`/`bug-fix` commits → Section `{ label: 'Fixed', color: 'text-warn' }`
-     - `perf`/`refactor` commits → Section `{ label: 'Improved', color: 'text-accent' }`
-   - **Language:** Simple, plain English — no jargon, no technical details.
-     Write as if explaining to someone who just uses the app.
-     Bad: `"Refactored IPC handler"` — Good: `"App responds faster to keypresses"`
-     Bad: `"Fix: race condition in AutoClicker"` — Good: `"Auto Clicker no longer stops unexpectedly"`
-   - Den neuen Eintrag **oben** ins `ENTRIES`-Array einfügen (neueste Version zuerst)
-   - Danach committen:
-     ```
-     git add src/components/tools/PatchNotes.tsx
-     git commit -m "chore: aktualisiere Patch Notes für v<version>"
-     ```
-
-6. Release auf `main` ausführen:
+7. Release von `main` ausführen:
    ```
-   set ELECTRON_RUN_AS_NODE=&& npx release-it <patch|minor|major>
+   git checkout main
+   npm run release
    ```
-   `release-it` erledigt automatisch:
+   `release-it --ci` erledigt automatisch:
    - Version in `package.json` bumpen
    - `CHANGELOG.md` aus Commits generieren
-   - Commit + Git-Tag erstellen (`v<version>`)
+   - Commit + Git-Tag erstellen (`vX.Y.Z`)
    - Tag + `main` zu GitHub pushen
 
-7. `main` zurück nach `dev` synchronisieren:
+8. `main` zurück nach `dev` synchronisieren:
    ```
    git checkout dev
    git merge main --ff-only
    git push origin dev
    ```
 
-8. GitHub Actions startet automatisch beim Tag-Push:
+9. GitHub Actions startet automatisch beim Tag-Push:
    - Electron Windows-Installer bauen
    - GitHub Release erstellen
    - Installer als Asset anhängen
 
-## Voraussetzungen (einmalig)
-```bash
-gh repo create Naizen-Tools --private
-# GH_TOKEN in GitHub → Settings → Secrets → Actions hinterlegen
-npm install --save-dev release-it @release-it/conventional-changelog
-```
+## Commit-Konventionen (release-it liest diese für den Changelog)
+
+| Prefix | Wann | Version-Bump |
+|---|---|---|
+| `feat:` | Neues Feature | minor |
+| `feat!:` / `BREAKING CHANGE` | Breaking / Entfernung | major |
+| `fix:` | Bug Fix | patch |
+| `perf:` | Performance | patch |
+| `refactor:` / `chore:` / `docs:` | Intern | keiner |
