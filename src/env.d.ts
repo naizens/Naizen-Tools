@@ -72,5 +72,10 @@ interface Window {
     iniPickFolder: () => Promise<string | null>
     monitorList: () => Promise<{ name: string; label: string; x: number; y: number; width: number; height: number; hz: number; modes: { width: number; height: number; hz: number }[] }[]>
     monitorSetResolution: (deviceName: string, width: number, height: number, hz: number) => Promise<number>
+    getPathForFile: (file: File) => string
+    wordPdfPickFiles: () => Promise<string[] | null>
+    wordPdfPickFolder: () => Promise<string | null>
+    wordPdfConvert: (inputPath: string, outFolder: string | null) => Promise<string>
+    wordPdfOpen: (filePath: string) => void
   }
 }

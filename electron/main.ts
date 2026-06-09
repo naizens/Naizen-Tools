@@ -860,6 +860,70 @@ function setupIpc() {
       screenshotHotkeyAccel = ''
     }
   })
+
+  // ─── Word → PDF ────────────────────────────────────────────────────────────
+
+  ipcMain.handle('word-pdf:pickFiles', async () => {
+    const result = await dialog.showOpenDialog({
+      title: 'Select Word documents',
+      filters: [{ name: 'Word Documents', extensions: ['docx'] }],
+      properties: ['openFile', 'multiSelections'],
+    })
+    return result.canceled ? null : result.filePaths
+  })
+
+  ipcMain.handle('word-pdf:pickFolder', async () => {
+    const result = await dialog.showOpenDialog({
+      title: 'Select output folder',
+      properties: ['openDirectory'],
+    })
+    return result.canceled ? null : result.filePaths[0]
+  })
+
+  ipcMain.handle('word-pdf:convert', async (_, { inputPath, outFolder }: { inputPath: string; outFolder: string | null }) => {
+    const { dirname, basename, join: pathJoin } = await import('path')
+    const stem      = basename(inputPath, '.docx')
+    const outputDir = outFolder ?? dirname(inputPath)
+    const outputPath = pathJoin(outputDir, `${stem}.pdf`)
+
+    const scriptPath = pathJoin(app.getPath('temp'), `word-pdf-${Date.now()}.ps1`)
+    const script = [
+      '$ErrorActionPreference = "Stop"',
+      '$word = New-Object -ComObject Word.Application',
+      '$word.Visible = $false',
+      '$word.DisplayAlerts = 0',
+      'try {',
+      `    $doc = $word.Documents.Open("${inputPath.replace(/\\/g, '\\\\').replace(/"/g, '`"')}")`,
+      `    $doc.SaveAs([ref]"${outputPath.replace(/\\/g, '\\\\').replace(/"/g, '`"')}", [ref]17)`,
+      '    $doc.Close([ref]$false)',
+      '} finally {',
+      '    $word.Quit()',
+      '    try { [System.Runtime.InteropServices.Marshal]::ReleaseComObject($word) | Out-Null } catch {}',
+      '}',
+    ].join('\n')
+
+    writeFileSync(scriptPath, script, 'utf8')
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const proc = spawn('powershell', [
+          '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', scriptPath,
+        ])
+        let stderr = ''
+        proc.stderr.on('data', (d: Buffer) => { stderr += d.toString() })
+        proc.on('close', (code: number) => {
+          if (code === 0) resolve()
+          else reject(new Error(stderr.trim() || `PowerShell exited with code ${code}`))
+        })
+      })
+    } finally {
+      try { unlinkSync(scriptPath) } catch { /* ignore */ }
+    }
+    return outputPath
+  })
+
+  ipcMain.on('word-pdf:open', (_, filePath: string) => {
+    shell.openPath(filePath)
+  })
 }
 
 // ─── Fenster ─────────────────────────────────────────────────────────────────

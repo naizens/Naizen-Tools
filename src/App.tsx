@@ -13,6 +13,7 @@ const IracingScreenshot  = React.lazy(() => import('./components/iracing/Iracing
 const IracingApps        = React.lazy(() => import('./components/iracing/IracingApps'))
 const IniConfig          = React.lazy(() => import('./components/iracing/IniConfig'))
 const MonitorTool        = React.lazy(() => import('./components/iracing/MonitorTool'))
+const WordToPdf          = React.lazy(() => import('./components/tools/WordToPdf'))
 const PatchNotes   = React.lazy(() => import('./components/shell/PatchNotes'))
 const Settings     = React.lazy(() => import('./components/shell/Settings'))
 const About        = React.lazy(() => import('./components/shell/About'))
@@ -112,11 +113,10 @@ export default function App() {
       <Navbar active={activeTool} onChange={setActiveTool} />
       <main className={[
         'flex-1 overflow-y-auto',
-        activeTool === 'screenshot' ? '' : 'px-4 pb-4 pt-4',
-
+        ['screenshot', 'iracing-apps', 'iracing-ini', 'iracing-monitor', 'word-pdf'].includes(activeTool) ? '' : 'px-4 pb-4 pt-4',
       ].join(' ')}>
         <Suspense fallback={<div className="px-4 pt-4"><ToolFallback /></div>}>
-          {activeTool !== 'screenshot' && (
+          {['afk', 'clicker', 'autokey'].includes(activeTool) && (
             <div className="max-w-lg mx-auto space-y-4">
               {activeTool === 'afk'     && <AntiAfk />}
               {activeTool === 'clicker' && <AutoClicker />}
@@ -127,6 +127,7 @@ export default function App() {
           {activeTool === 'iracing-apps'    && <IracingApps />}
           {activeTool === 'iracing-ini'     && <IniConfig />}
           {activeTool === 'iracing-monitor' && <MonitorTool />}
+          {activeTool === 'word-pdf'        && <WordToPdf />}
         </Suspense>
       </main>
       {patchNotesOpen && (

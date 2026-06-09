@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 
 contextBridge.exposeInMainWorld('api', {
   startTool: (tool: string, config: Record<string, unknown>) =>
@@ -17,7 +17,6 @@ contextBridge.exposeInMainWorld('api', {
   },
   updateInstall: () => ipcRenderer.send('update:install'),
   windowsList: () => ipcRenderer.invoke('windows:list'),
-  setGameFps: (fg: number, bg: number) => ipcRenderer.invoke('game:setFps', { fg, bg }),
   setHotkey: (tool: string, raw: string) => ipcRenderer.invoke('hotkey:set', { tool, raw }),
   clearHotkey: (tool: string) => ipcRenderer.invoke('hotkey:clear', { tool }),
   onToolStatus: (cb: (data: { tool: string; running: boolean }) => void) => {
@@ -104,6 +103,14 @@ contextBridge.exposeInMainWorld('api', {
   iniDelete: (id: string) => ipcRenderer.invoke('ini:delete', id) as Promise<void>,
   iniRename: (id: string, name: string) => ipcRenderer.invoke('ini:rename', { id, name }) as Promise<void>,
   iniPickFolder: () => ipcRenderer.invoke('ini:pickFolder') as Promise<string | null>,
+
+  // Word → PDF
+  getPathForFile: (file: File) => webUtils.getPathForFile(file),
+  wordPdfPickFiles: () => ipcRenderer.invoke('word-pdf:pickFiles') as Promise<string[] | null>,
+  wordPdfPickFolder: () => ipcRenderer.invoke('word-pdf:pickFolder') as Promise<string | null>,
+  wordPdfConvert: (inputPath: string, outFolder: string | null) =>
+    ipcRenderer.invoke('word-pdf:convert', { inputPath, outFolder }) as Promise<string>,
+  wordPdfOpen: (filePath: string) => ipcRenderer.send('word-pdf:open', filePath),
 
   // Monitor resolution
   monitorList: () => ipcRenderer.invoke('monitor:list') as Promise<{ name: string; label: string; x: number; y: number; width: number; height: number; hz: number; modes: { width: number; height: number; hz: number }[] }[]>,

@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { useToolStore } from '@/store/toolStore'
 
-export type Tool = 'afk' | 'clicker' | 'autokey' | 'screenshot' | 'iracing-apps' | 'iracing-ini' | 'iracing-monitor'
+export type Tool = 'afk' | 'clicker' | 'autokey' | 'screenshot' | 'iracing-apps' | 'iracing-ini' | 'iracing-monitor' | 'word-pdf'
 
 const MACROS_TOOLS: Tool[] = ['clicker', 'autokey']
 const IRACING_TOOLS: Tool[] = ['screenshot', 'iracing-apps', 'iracing-ini', 'iracing-monitor']
+const TOOLS_TOOLS: Tool[] = ['word-pdf']
 
 const MACROS_ITEMS: { id: Tool; label: string }[] = [
   { id: 'clicker', label: 'Clicker' },
@@ -17,6 +18,10 @@ const IRACING_ITEMS: { id: Tool; label: string }[] = [
   { id: 'iracing-apps',     label: 'Apps' },
   { id: 'iracing-ini',      label: 'Config Profiles' },
   { id: 'iracing-monitor',  label: 'Monitor' },
+]
+
+const TOOLS_ITEMS: { id: Tool; label: string }[] = [
+  { id: 'word-pdf', label: 'Word → PDF' },
 ]
 
 const FLAT_TABS: { id: Tool; label: string }[] = [
@@ -128,6 +133,16 @@ export default function Navbar({ active, onChange }: Props) {
         active={active}
         running={false}
         width="w-36"
+        onChange={onChange}
+      />
+
+      <Dropdown
+        label="Tools"
+        items={TOOLS_ITEMS}
+        tools={TOOLS_TOOLS}
+        active={active}
+        running={false}
+        width="w-28"
         onChange={onChange}
       />
     </nav>
