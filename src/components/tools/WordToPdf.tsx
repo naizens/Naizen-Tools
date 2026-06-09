@@ -1,14 +1,8 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import { FileText, FolderOpen, Trash2, CheckCircle, XCircle, Loader, ExternalLink, Plus } from 'lucide-react'
+import { useToolStore, type WordPdfFile } from '@/store/toolStore'
 
-interface FileEntry {
-  id: string
-  inputPath: string
-  name: string
-  status: 'pending' | 'converting' | 'done' | 'error'
-  outputPath?: string
-  error?: string
-}
+type FileEntry = WordPdfFile
 
 function statusIcon(status: FileEntry['status']) {
   if (status === 'converting') return <Loader size={14} className="text-accent animate-spin shrink-0" />
@@ -18,11 +12,18 @@ function statusIcon(status: FileEntry['status']) {
 }
 
 export default memo(function WordToPdf() {
-  const [files, setFiles]         = useState<FileEntry[]>([])
-  const [outFolder, setOutFolder] = useState('')
+  const files        = useToolStore((s) => s.wordPdfFiles)
+  const setFiles     = useToolStore((s) => s.setWordPdfFiles)
+  const outFolder    = useToolStore((s) => s.wordPdfOutFolder)
+  const setOutFolder = useToolStore((s) => s.setWordPdfOutFolder)
   const [converting, setConverting] = useState(false)
   const dropRef = useRef<HTMLDivElement>(null)
   const [dragOver, setDragOver]   = useState(false)
+
+  // Reset any stuck 'converting' entries left over from navigating away mid-conversion
+  useEffect(() => {
+    setFiles((prev) => prev.map((f) => f.status === 'converting' ? { ...f, status: 'pending' } : f))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // Document-level handlers are required in Electron to enable drop events at all.

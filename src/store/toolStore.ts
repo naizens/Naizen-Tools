@@ -3,13 +3,15 @@ import { persist } from 'zustand/middleware'
 import { createAppSlice, type AppSlice } from './slices/appSlice'
 import { createMacrosSlice, type MacrosSlice } from './slices/macrosSlice'
 import { createIracingSlice, type IracingSlice } from './slices/iracingSlice'
+import { createToolsSlice, type ToolsSlice } from './slices/toolsSlice'
 import { defaultApp, type IracingProfile, type ScreenshotConfig } from './types'
 
 // Re-export so components can keep importing from '@/store/toolStore'
 export type { IracingApp, IracingProfile, ScreenshotConfig, ToolConfig } from './types'
 export { defaultApp } from './types'
+export type { WordPdfFile } from './slices/toolsSlice'
 
-export type FullState = AppSlice & MacrosSlice & IracingSlice
+export type FullState = AppSlice & MacrosSlice & IracingSlice & ToolsSlice
 
 export const useToolStore = create<FullState>()(
   persist(
@@ -17,6 +19,7 @@ export const useToolStore = create<FullState>()(
       ...createAppSlice(...args),
       ...createMacrosSlice(...args),
       ...createIracingSlice(...args),
+      ...createToolsSlice(...args),
     }),
     {
       name: 'naizen-tools-store',
