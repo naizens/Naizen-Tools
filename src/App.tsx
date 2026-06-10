@@ -6,7 +6,6 @@ import UpdateBadge from './components/shell/UpdateBadge'
 import CloseDialog from './components/shell/CloseDialog'
 
 const AntiAfk      = React.lazy(() => import('./components/macros/AntiAfk'))
-const WHold        = React.lazy(() => import('./components/macros/WHold'))
 const AutoClicker  = React.lazy(() => import('./components/macros/AutoClicker'))
 const AutoKey      = React.lazy(() => import('./components/macros/AutoKey'))
 const IracingScreenshot  = React.lazy(() => import('./components/iracing/IracingScreenshot'))
@@ -113,7 +112,7 @@ export default function App() {
       <Navbar active={activeTool} onChange={setActiveTool} />
       <main className={[
         'flex-1 overflow-y-auto',
-        ['screenshot', 'iracing-apps', 'iracing-ini', 'iracing-monitor', 'word-pdf'].includes(activeTool) ? '' : 'px-4 pb-4 pt-4',
+        activeTool === 'screenshot' ? '' : 'px-4 pb-4 pt-4',
       ].join(' ')}>
         <Suspense fallback={<div className="px-4 pt-4"><ToolFallback /></div>}>
           {['afk', 'clicker', 'autokey'].includes(activeTool) && (

@@ -116,7 +116,7 @@ export default memo(function WordToPdf() {
   const pendingCount = files.filter((f) => f.status === 'pending' || f.status === 'error').length
 
   return (
-    <div className="flex flex-col h-full -mx-4 -my-4 overflow-hidden">
+    <div className="flex flex-col h-full -mx-4 -my-4">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-surface/10 shrink-0">
         <span className="text-xs font-mono font-semibold text-muted/40 tracking-widest uppercase">Word → PDF</span>
@@ -127,25 +127,25 @@ export default memo(function WordToPdf() {
         )}
       </div>
 
-      {/* Drop zone — compact, fixed height */}
+      {/* Drop zone */}
       <div
         ref={dropRef}
         onClick={pickFiles}
         className={[
-          'mx-5 mt-4 mb-0 flex items-center justify-center gap-3 rounded-lg border-2 border-dashed cursor-pointer transition-colors py-5 shrink-0',
+          'mx-5 mt-4 shrink-0 flex items-center justify-center gap-3 rounded-lg border-2 border-dashed cursor-pointer transition-colors h-16',
           dragOver
             ? 'border-accent/60 bg-accent/5'
             : 'border-surface/20 hover:border-surface/40 hover:bg-surface/5',
         ].join(' ')}
       >
-        <Plus size={16} className={dragOver ? 'text-accent' : 'text-muted/30'} />
+        <Plus size={15} className={dragOver ? 'text-accent' : 'text-muted/30'} />
         <p className="text-xs font-mono text-muted/40">
           Drop .docx files or <span className="text-accent">click to browse</span>
         </p>
       </div>
 
       {/* Output folder */}
-      <div className="flex items-center gap-2 px-5 py-3 shrink-0">
+      <div className="flex items-center gap-2 px-5 py-2.5 shrink-0">
         <button
           onClick={pickFolder}
           className="flex items-center gap-1.5 px-3 h-8 rounded-md border border-surface/15 text-xs font-mono text-muted/50 hover:text-muted/80 hover:bg-surface/10 transition-colors shrink-0"
@@ -163,7 +163,7 @@ export default memo(function WordToPdf() {
         )}
       </div>
 
-      {/* File list — fills remaining space, scrolls independently */}
+      {/* File list */}
       <div className="flex-1 overflow-y-auto px-5 space-y-1.5 pb-2">
         {files.map((f) => (
           <div
