@@ -145,7 +145,7 @@ export default memo(function IracingScreenshot() {
     setGallery(entries)
     if (entries[0] && !selected) {
       setSelected(entries[0])
-      if (entries[0].thumb) setPreview(entries[0].thumb)
+      setPreview('app-file:///' + entries[0].path.replace(/\\/g, '/'))
     }
   }, [cfg.folder]) // eslint-disable-line react-hooks/exhaustive-deps
 
