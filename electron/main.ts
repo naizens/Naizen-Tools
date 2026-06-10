@@ -882,19 +882,22 @@ function setupIpc() {
 
   ipcMain.handle('word-pdf:convert', async (_, { inputPath, outFolder }: { inputPath: string; outFolder: string | null }) => {
     const { dirname, basename, join: pathJoin } = await import('path')
-    const stem      = basename(inputPath, '.docx')
-    const outputDir = outFolder ?? dirname(inputPath)
+    const stem       = basename(inputPath, '.docx')
+    const outputDir  = outFolder ?? dirname(inputPath)
     const outputPath = pathJoin(outputDir, `${stem}.pdf`)
 
+    // Paths are passed via env vars to avoid all escaping and encoding issues
     const scriptPath = pathJoin(app.getPath('temp'), `word-pdf-${Date.now()}.ps1`)
     const script = [
       '$ErrorActionPreference = "Stop"',
+      '$inp = $env:WORD_INPUT',
+      '$out = $env:WORD_OUTPUT',
       '$word = New-Object -ComObject Word.Application',
       '$word.Visible = $false',
       '$word.DisplayAlerts = 0',
       'try {',
-      `    $doc = $word.Documents.Open("${inputPath.replace(/\\/g, '\\\\').replace(/"/g, '`"')}")`,
-      `    $doc.SaveAs([ref]"${outputPath.replace(/\\/g, '\\\\').replace(/"/g, '`"')}", [ref]17)`,
+      '    $doc = $word.Documents.Open($inp)',
+      '    $doc.SaveAs([ref]$out, [ref]17)',
       '    $doc.Close([ref]$false)',
       '} finally {',
       '    $word.Quit()',
@@ -907,7 +910,9 @@ function setupIpc() {
       await new Promise<void>((resolve, reject) => {
         const proc = spawn('powershell', [
           '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', scriptPath,
-        ])
+        ], {
+          env: { ...process.env, WORD_INPUT: inputPath, WORD_OUTPUT: outputPath },
+        })
         let stderr = ''
         proc.stderr.on('data', (d: Buffer) => { stderr += d.toString() })
         proc.on('close', (code: number) => {
